@@ -11,5 +11,5 @@ Clone this repo and run `pip install -r requirements.txt` to install its depende
 
 ## Authors 
 - Álvaro Bermejillo Seco
-- Dani Bedialauneta Rodríguez
+- Daniel Bedialauneta Rodríguez
 - Marc Serra Peralta
