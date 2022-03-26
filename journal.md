@@ -25,6 +25,19 @@ You will find how to include [links](https://docs.gitlab.com/ee/user/markdown.ht
 [images](https://docs.gitlab.com/ee/user/markdown.html#images) particularly.
 
 ## Week 1
+
+### Bullet list:
+
+1. Research on the process of VMC and the different algorithms
+2. Search for a trial wavefunction and compute the analytic $`E_local`$ for the harmonic oscillator
+3. Implement the Metropolis algorithm
+4. Implement the Monte Carlo integration algorithm
+5. Validate the results for E(parameter) for the harmonic oscillator
+
+### Report 
+
+
+
 (due 18 April 2022, 23:59)
 
 
