@@ -28,11 +28,11 @@ You will find how to include [links](https://docs.gitlab.com/ee/user/markdown.ht
 
 ### Bullet list:
 
-1. Research on the process of VMC and the different algorithms (@mserraperalta, @abemerjillo, @dbedialaunetar)
+1. Research on the process of VMC and the different algorithms (@mserraperalta, @abermejillo, @dbedialaunetar)
 2. Search for a trial wavefunction and compute the analytic $`E_{local}`$ for the harmonic oscillator (@mserraperalta)
 3. Implement the Metropolis algorithm (@abermejillo)
 4. Implement the Monte Carlo integration algorithm (@dbedialaunetar)
-5. Validate the results for E(parameter) for the harmonic oscillator (@mserraperalta, @abemerjillo, @dbedialaunetar)
+5. Validate the results for E(parameter) for the harmonic oscillator (@mserraperalta, @abermejillo, @dbedialaunetar)
 6. Write a sketch for the structure of the library (@mserraperalta)
 
 
