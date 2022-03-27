@@ -1,17 +1,21 @@
+from sympy import simplify, lambdify, conjugate, integrate, oo
+
 #######################################
 #	   PROCESS INPUT PARAMETERS
 #######################################
 
-def get_E_local_f(H, psi_t):
+def get_E_local_f(H, psi_t, var):
 	"""
 	Returns the function local energy given a Hamiltonian an trial wave function. 
 
 	Parameters
 	----------
-	H : str
+	H : sympy expression
 		Hamiltonian of the system
-	psi_t : str
+	psi_t : sympy expression
 		Trial wavefunction
+	var : sympy symbols
+		Variables for position r and for parameters alpha
 
 	Returns
 	-------
@@ -19,19 +23,23 @@ def get_E_local_f(H, psi_t):
 		Local energy function depending on r and alpha
 	"""
 
-	E_local_f = lambda r, alpha: 0
+	E_local_f = H/psi_t
+	E_local_f = simplify(E_local_f)
+	E_local_f = lambdify(var, E_local_f)
 
 	return E_local_f
 
 
-def get_prob_density(psi_t):
+def get_prob_density(psi_t, var):
 	"""
 	Returns the probability density function for metropolis algorithm given a trial wave function. 
 
 	Parameters
 	----------
-	psi_t : str
+	psi_t : sympy expression
 		Trial wavefunction
+	var : sympy symbols
+		Variables for position r and for parameters alpha
 
 	Returns
 	-------
@@ -39,7 +47,9 @@ def get_prob_density(psi_t):
 		Probability density function for the specified trial wave function
 	"""
 
-	prob_density = lambda r, alpha: 0
+	prob_density = conjugate(psi_t)*psi_t
+	prob_density = simplify(prob_density)
+	prob_density = lambdify(var, prob_density)
 
 	return prob_density
 
