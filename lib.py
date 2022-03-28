@@ -1,4 +1,5 @@
 from sympy import simplify, lambdify, conjugate, integrate, oo
+from multiprocessing import Pool
 import numpy as np
 
 #######################################
@@ -217,6 +218,15 @@ def MC_integration(E_local_f, prob_density, alpha, N_steps=5000, N_walkers=250, 
 	-------
 	...
 	"""
+
+	# initialization of variables and prepare the inputs
+	inputs = [(prob_density, alpha, N_steps, dim, init_point, tm_sigma)]*N_walkers
+
+	# multiprocessing
+	pool = Pool() # uses maximum number of processors available
+	data_outputs = pool.map(random_walker, inputs)
+
+	# do stuff with data_outputs
 
 	return 
 
