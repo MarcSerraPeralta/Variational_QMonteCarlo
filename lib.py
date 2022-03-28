@@ -147,6 +147,7 @@ def random_walker(prob_density, alpha, N_steps, dim, init_point, tm_sigma):
 	
 	return steps
 
+
 def rand_init_point(system_size,dim):
 	"""
 	Returns a random initial point for the random walkers given a typical size of the system according to a normal distribution. 
@@ -189,9 +190,6 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, Niter = 500, 
 			exit
 		iter += 1
 	return curr_tm_sigma
-
-
-
 
 
 def MC_integration(E_local_f, prob_density, alpha, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
@@ -250,12 +248,18 @@ class Optimizer:
 		self.method = opt_args["method"]
 		self.converged = False
 		self.alpha = opt_args["init_alpha"]
+
+		if self.method == "scan1D":
+			self.step = opt_args["step"]
+			self.final = opt_args["final"]
+			self.alpha_range = np.arange(self.alpha, self.final + self.step, self.step).tolist()
 		return
 
 	def update_alpha(self, args):
-		if self.method == "scan":
-			self.alpha = scan_alpha(self.alpha, step)
-			if True:
+		if self.method == "scan1D":
+			if len(self.alpha_range) != 0:
+				self.alpha = self.alpha_range.pop(0) # deletes also first element from list
+			else:
 				self.converged = True
 
 		elif self.method == "steepest_descent":
@@ -267,28 +271,6 @@ class Optimizer:
 			self.converged = True
 		
 		return
-
-
-def scan_alpha(alpha_old, step):
-	"""
-	Returns the new value of alpha corresponding of doing an scan.
-
-	Parameters
-	----------
-	alpha_new : np.ndarray
-		Old value of alpha
-	step : np.ndarray
-		Steps for alpha
-
-	Returns
-	-------
-	alpha_new : np.ndarray
-		New value of alpha
-	"""
-
-	alpha_new = 0
-
-	return alpha_new
 
 
 def steepest_descent(alpha_old, args):
