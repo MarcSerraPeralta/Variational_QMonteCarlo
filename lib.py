@@ -8,7 +8,7 @@ import numpy as np
 
 def get_E_local_f(H, psi_t, var):
 	"""
-	Returns the function local energy given a Hamiltonian an trial wave function. 
+	Returns the function local energy given a Hamiltonian an trial wave function.
 
 	Parameters
 	----------
@@ -34,7 +34,7 @@ def get_E_local_f(H, psi_t, var):
 
 def get_prob_density(psi_t, var):
 	"""
-	Returns the probability density function for metropolis algorithm given a trial wave function. 
+	Returns the probability density function for metropolis algorithm given a trial wave function.
 
 	Parameters
 	----------
@@ -62,12 +62,14 @@ def get_prob_density(psi_t, var):
 
 def prob_density(r, alpha):
 	"""
-	Returns the value of the probability density function at the specified positions r and parameters alpha. 
+	Returns the value of the probability density function at the specified positions r and parameters alpha.
+
+	dim = dimension of the integral space.
 
 	Parameters
 	----------
-	r : np.ndarray(N*dim)
-		Positions of N electrons in the form: r1x, r1y, ..., r2x, r2y, ... 
+	r : np.ndarray(dim)
+		Point in configuration space: r1x, r1y, ..., r2x, r2y, ... 
 	alpha : np.ndarray
 		Parameters of the trial wave functon
 
@@ -84,12 +86,14 @@ def prob_density(r, alpha):
 
 def E_local_f(r, alpha):
 	"""
-	Returns the value of the local energy at the specified positions r and parameters alpha. 
+	Returns the value of the local energy at the specified positions r and parameters alpha.
+
+	dim = dimension of the integral space.
 
 	Parameters
 	----------
-	r : np.ndarray(dim = N*space_dim)
-		Positions of N electrons in the form: r1x, r1y, r1z, r2x, r2y, r2z, ...
+	r : np.ndarray(dim)
+		Point in configuration space: r1x, r1y, ..., r2x, r2y, ... 
 	alpha : np.ndarray
 		Parameters of the trial wave functon
 
@@ -111,7 +115,7 @@ def E_local_f(r, alpha):
 def random_walker(prob_density, alpha, N_steps, dim, init_point, tm_sigma):
 	"""
 	Returns steps of a random walker that follows a Markov chain given a probability
-	density function using the Metropolis algorithm. 
+	density function using the Metropolis algorithm.
 
 	Parameters
 	----------
@@ -148,9 +152,9 @@ def random_walker(prob_density, alpha, N_steps, dim, init_point, tm_sigma):
 	return steps
 
 
-def rand_init_point(system_size,dim):
+def rand_init_point(system_size, dim, N_points):
 	"""
-	Returns a random initial point for the random walkers given a typical size of the system according to a normal distribution. 
+	Returns a random initial point for the random walkers given a typical size of the system according to a normal distribution.
 
 	Parameters
 	----------
@@ -163,7 +167,7 @@ def rand_init_point(system_size,dim):
 	init_point = np.ndarray(dim)
 		Random initial point for the random walkers
 	"""
-	init_point = np.random.normal(scale=system_size, size = dim)
+	init_point = np.random.normal(scale=system_size, size = (N_points, dim))
 
 	return init_point
 
@@ -192,9 +196,10 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, Niter = 500, 
 	return curr_tm_sigma
 
 
-def MC_integration(E_local_f, prob_density, alpha, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
+def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, normalized = True):
 	"""
-	Returns ... using Monte Carlo integration. 
+	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers
+	using Monte Carlo integration. 
 
 	Parameters
 	----------
@@ -218,16 +223,53 @@ def MC_integration(E_local_f, prob_density, alpha, N_steps=5000, N_walkers=250, 
 	...
 	"""
 
+	init_points = rand_init_point(L_start, dim, N_walkers)
+	tm_sigma = find_optimal_tm_sigma(prob_density, alpha, dim, L_start) # I don't know if tm_sigma_init should be L_start
+
 	# initialization of variables and prepare the inputs
-	inputs = [(prob_density, alpha, N_steps, dim, init_point, tm_sigma)]*N_walkers
+	inputs = [(prob_density, alpha, N_steps, dim, init_points[i], tm_sigma) for i in range(N_walkers)]
 
 	# multiprocessing
 	pool = Pool() # uses maximum number of processors available
 	data_outputs = pool.map(random_walker, inputs)
 
 	# do stuff with data_outputs
+	total_steps = np.array(data_outputs)[:, N_skip:, :].reshape(N_walkers*(N_steps-N_skip), dim)
+	E_alpha = MC_sum(E_local_f, total_steps, alpha)
 
-	return 
+	return E_alpha
+
+def MC_sum(E_local_f, steps, alpha):
+	"""Computes expectation value of energy, E(alpha), given a distribution
+	of steps
+
+	Parameters
+	----------
+	E_local_f : function(r, alpha)
+		Local energy function depending on r and alpha
+	steps : np.ndarray
+		Array of points to be used in the computation of the integral.
+		Each row corresponds to a vector (r1 r2 r3 ...), where the ri
+		are the variables over which we take the integral.
+	alpha : np.ndarray
+		Parameters of the trial wave functon
+
+	Returns
+	-------
+	E_alpha : float
+		Expectation value of the energy for given parameters of the trial wave function
+	"""
+
+	N_steps = np.shape(steps)[0]
+	E_local_list = np.zeros(N_steps)
+
+	for i in range(N_steps): #Is it possible to get rid of the for? Possibly if E_local_f function allows to input matrices
+							 #If we use for, using normal lists is faster than numpy
+		E_local_list[i] = E_local_f(steps[i], alpha)
+	
+	E_alpha = np.average(E_local_list)
+
+	return E_alpha
 
 
 #######################################
