@@ -1,4 +1,5 @@
 from sympy import simplify, lambdify, conjugate, integrate, oo
+import numpy as np
 
 #######################################
 #	   PROCESS INPUT PARAMETERS
@@ -64,8 +65,8 @@ def prob_density(r, alpha):
 
 	Parameters
 	----------
-	r : np.ndarray(3*N)
-		Positions of N electrons in the form: r1x, r1y, r1z, r2x, r2y, r2z, ...
+	r : np.ndarray(N*dim)
+		Positions of N electrons in the form: r1x, r1y, ..., r2x, r2y, ... 
 	alpha : np.ndarray
 		Parameters of the trial wave functon
 
@@ -86,7 +87,7 @@ def E_local_f(r, alpha):
 
 	Parameters
 	----------
-	r : np.ndarray(3*N)
+	r : np.ndarray(dim = N*space_dim)
 		Positions of N electrons in the form: r1x, r1y, r1z, r2x, r2y, r2z, ...
 	alpha : np.ndarray
 		Parameters of the trial wave functon
@@ -106,7 +107,7 @@ def E_local_f(r, alpha):
 #	    MONTE CARLO INTEGRATION
 #######################################
 
-def random_walker(prob_density, alpha, N_steps):
+def random_walker(prob_density, alpha, N_steps, dim, init_point, tm_sigma):
 	"""
 	Returns steps of a random walker that follows a Markov chain given a probability
 	density function using the Metropolis algorithm. 
@@ -119,16 +120,78 @@ def random_walker(prob_density, alpha, N_steps):
 		Parameters of the trial wave functon
 	N_steps : int
 		Number of steps that the random walker takes
+	dim: int
+		Dimension of the configuration space, i.e. number of degrees of freedom in the system
+	init_point: np.ndarray(dim)
+		Starting point of the random walker
+	tm_sigma: float
+		Standard deviation that defines the trial move according to a normal distribution
 
 	Returns
 	-------
-	steps : np.ndarray(N_steps)
+	steps : np.ndarray(N_steps, dim)
 		Steps of the random walker
 	"""
 
-	steps = np.zeros(N_steps)
-
+	steps = np.zeros([N_steps,dim])
+	steps[0] = init_point
+	curr_point = init_point
+	for i in range(N_steps):
+		next_point = np.random.normal(loc=curr_point,scale=tm_sigma)
+		rate = prob_density(next_point,alpha)/prob_density(curr_point)
+		if np.random.rand(1) <= rate:
+			steps[i] = next_point
+			curr_point = next_point
+		else:
+			steps[i] = curr_point
+	
 	return steps
+
+def rand_init_point(system_size,dim):
+	"""
+	Returns a random initial point for the random walkers given a typical size of the system according to a normal distribution. 
+
+	Parameters
+	----------
+	system_size: float
+		Typical size of the system, e.g. fro teh Hydrogen atom it could be 2a_0
+	dim: int
+		Dimension of the configuration space, i.e. number of degrees of freedom in the system
+
+	Returns
+	init_point = np.ndarray(dim)
+		Random initial point for the random walkers
+	"""
+	init_point = np.random.normal(scale=system_size, size = dim)
+
+	return init_point
+
+def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, Niter = 500, tol = 0.05):
+	"NOT FINISHED: Find an optimal trial move sigma that provides an average acceptance ratio of 0.5 +-tol using the steepest descent method. "
+	curr_point = np.zeros(dim)
+	curr_tm_sigma = tm_sigma_init
+	iter = 1
+	total_rate, rate_av = 0, 0
+	while iter<=Niter:
+		for i in range(100): 
+			next_point = np.random.normal(loc=curr_point,scale=curr_tm_sigma)
+			rate = prob_density(next_point,alpha)/prob_density(curr_point)
+			total_rate += rate
+			if np.random.rand(1) <= rate:
+				curr_point = next_point
+		rate_av = total_rate/100
+
+		if abs(rate_av - 0.5)>tol & (rate_av - 0.5)>0:
+			curr_tm_sigma = 0
+		elif abs(rate_av - 0.5)>tol & (rate_av - 0.5)<0:
+			curr_tm_sigma = 0
+		else:
+			exit
+		iter += 1
+	return curr_tm_sigma
+
+
+
 
 
 def MC_integration(E_local_f, prob_density, alpha, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
