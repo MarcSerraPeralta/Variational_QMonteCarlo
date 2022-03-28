@@ -134,17 +134,16 @@ def random_walker(prob_density, alpha, N_steps, dim, init_point, tm_sigma):
 		Steps of the random walker
 	"""
 
-	steps = np.zeros([N_steps,dim])
+	steps = np.zeros((N_steps,dim))
 	steps[0] = init_point
-	curr_point = init_point
-	for i in range(N_steps):
-		next_point = np.random.normal(loc=curr_point,scale=tm_sigma)
-		rate = prob_density(next_point,alpha)/prob_density(curr_point)
-		if np.random.rand(1) <= rate:
+	mean, cov = np.zeros(dim), tm_sigma*np.eye(dim) # for gaussian
+
+	for i in np.arange(1, N_steps):
+		next_point = steps[i-1] + np.random.multivariate_normal(mean, cov)
+		if np.random.rand(1) <= prob_density(next_point, alpha)/prob_density(steps[i-1], alpha):
 			steps[i] = next_point
-			curr_point = next_point
 		else:
-			steps[i] = curr_point
+			steps[i] = steps[i-1]
 	
 	return steps
 
