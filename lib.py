@@ -1,6 +1,7 @@
 from sympy import simplify, lambdify, conjugate, integrate, oo
 from multiprocessing import Pool
 import numpy as np
+from scipy.optimize import toms748 
 
 #######################################
 #	   PROCESS INPUT PARAMETERS
@@ -142,9 +143,8 @@ def random_walker(prob_density, alpha, N_steps, dim, init_point, tm_sigma):
 
 	steps = np.zeros((N_steps,dim))
 	steps[0] = init_point
-	mean, var = np.zeros(dim), tm_sigma
 	for i in np.arange(1, N_steps):
-		next_point = steps[i-1] + np.random.normal(mean, var)
+		next_point = steps[i-1] + np.random.normal(scale = tm_sigma, size = (dim,1))
 		if np.random.rand(1) <= prob_density(next_point, alpha)/prob_density(steps[i-1], alpha):
 			steps[i] = next_point
 		else:
@@ -172,9 +172,9 @@ def rand_init_point(system_size, dim, N_points):
 
 	return init_point
 
-def average_rate(prob_density, alpha, dim, tm_sigma, N_av=100):
+def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 	"""
-	Returns the average acceptance ratio for a random walker giving N_av steps
+	Returns the deviation of the average acceptance ratio for a random walker giving N_av steps from 0.5
 
 	Parameters
 	----------
@@ -190,10 +190,23 @@ def average_rate(prob_density, alpha, dim, tm_sigma, N_av=100):
 		Number of steps the walker takes to compute the acceptance ratio average
 	Returns
 	-------
-	av_ratio: float
+	dev_av_ratio: float
 		Average acceptance ratio for a random walker giving N_av steps
 	"""
-	return 0
+	av_ratio = 0
+	steps = np.zeros((N_av,dim))
+	steps[0] = np.zeros(dim)
+	for i in np.arange(1, N_av):
+		next_point = steps[i-1] + np.random.normal(scale = tm_sigma, size = (dim,1))
+		ratio = min(prob_density(next_point, alpha)/prob_density(steps[i-1], alpha),1)
+		if np.random.rand(1) <= ratio:
+			steps[i] = next_point
+		else:
+			steps[i] = steps[i-1]
+		av_ratio += ratio
+	dev_av_ratio = av_ratio/N_av -0.5
+	return dev_av_ratio
+
 
 def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, N_iter = 500, N_av=100, tol = 0.05):
 	"""
@@ -219,7 +232,11 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, N_iter = 500,
 	optimal_tm_sigma: float
 		tm_sigma such that the corresponding average accepting ratio is 0.5+-tol
 	"""
-	return tm_sigma_init
+	arguments = (prob_density, alpha, dim, N_av=100)
+	opt_tm_sigma = toms748(dev_av_rate, tm_sigma_init/100, tm_sigma_init, args = arguments, maxiter = N_iter, xtol = tol) 
+												# Finds a zero in dev_av_rate between tm_sigma_init and tm_sigma_init/100
+												# the function must be of oposite signs at the two points
+	return opt_tm_sigma
 
 def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, normalized = True):
 	"""
