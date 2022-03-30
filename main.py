@@ -7,11 +7,12 @@ import lib as lib
 
 # Hamiltonian and trial wavefunction
 x, alpha = symbols('x alpha', real=True)
-dim = 1 #dimension of configuration space
 psi_t = (2*alpha/pi)**0.25 * exp(-alpha*x**2) 
-normalized = True # if psi_t is normalized
 H = -0.5 * diff(psi_t, x, 2) + 0.5 * x**2 * psi_t # Harmonic oscillator: 0.5*d^2 psi_t / dx^2 + 0.5*x^2*psi_t^2
+
 var = [x, alpha] 
+dim = 1 # dimension of configuration space
+normalized = True # if psi_t is normalized
 
 # Monte Carlo integration params
 N_steps = 5000

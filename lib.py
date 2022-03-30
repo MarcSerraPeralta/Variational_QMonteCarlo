@@ -69,17 +69,15 @@ def prob_density(r, alpha):
 
 	Parameters
 	----------
-	r : np.ndarray(N_points, dim)
-		N_points points in configuration space: r11, r12, r13, ...
-									  			r21, r22, r23, ...
-									  			r32, ...	
+	r : np.ndarray(N*dim)
+		Positions of N particles in the form: r1x, r1y, ..., r2x, r2y, ... 
 	alpha : np.ndarray	
 		Parameters of the trial wave function
 
 	Returns
 	-------
-	prob : np.ndarray(N_points)
-		Probability density function at the specified N_points r and alpha
+	prob : np.ndarray(N)
+		Probability density function at the specified r and alpha
 	"""
 
 	prob = 0
@@ -95,8 +93,8 @@ def E_local_f(r, alpha):
 
 	Parameters
 	----------
-	r : np.ndarray(dim)
-		Point in configuration space: r1x, r1y, ..., r2x, r2y, ... 
+	r : np.ndarray(N*dim)
+		Positions of N particles in the form: r1x, r1y, ..., r2x, r2y, ... 
 	alpha : np.ndarray
 		Parameters of the trial wave function
 
@@ -115,24 +113,23 @@ def E_local_f(r, alpha):
 #	    MONTE CARLO INTEGRATION
 #######################################
 
-def random_walker(prob_density, alpha, N_steps, dim, init_point, tm_sigma):
+def random_walker(prob_density, alpha, N_steps, init_point, tm_sigma):
 	"""
 	Returns steps of a random walker that follows a Markov chain given a probability
 	density function using the Metropolis algorithm. 
+	'dim' is obtained from init_point. 
 
 	Parameters
 	----------
 	prob_density : function(r, alpha)
 		Probability density function depending on position r and parameters alpha
 	alpha : np.ndarray
-		Parameters of the trial wave function
+		Parameters of the trial wave functon
 	N_steps : int
 		Number of steps that the random walker takes
-	dim : int
-		Dimension of the configuration space, i.e. number of degrees of freedom in the system
-	init_point : np.ndarray(dim)
+	init_point: np.ndarray(dim)
 		Starting point of the random walker
-	tm_sigma : float
+	tm_sigma: float
 		Standard deviation that defines the trial move according to a normal distribution
 
 	Returns
@@ -141,16 +138,65 @@ def random_walker(prob_density, alpha, N_steps, dim, init_point, tm_sigma):
 		Steps of the random walker
 	"""
 
+	dim = init_point.shape[0]
 	steps = np.zeros((N_steps,dim))
 	steps[0] = init_point
+
 	for i in np.arange(1, N_steps):
-		next_point = steps[i-1] + np.random.normal(scale = tm_sigma, size = (dim,1))
-		if np.random.rand(1) <= prob_density(next_point, alpha)/prob_density(steps[i-1], alpha):
+		print(i, "\r", end="")
+		next_point = steps[i-1] + np.random.normal(0, tm_sigma, size=dim)
+		if (np.random.rand(1) <= prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha)).all():
 			steps[i] = next_point
 		else:
 			steps[i] = steps[i-1]
+
+	print("")
 	
 	return steps
+
+
+def random_walkers(prob_density, alpha, N_steps, init_points, tm_sigma):
+	"""
+	Returns steps of N_walkers random walkers that follows a Markov chain given a probability
+	density function using the Metropolis algorithm. 
+	'N_walkers' and 'dim' are obtained from init_points.
+
+	Parameters
+	----------
+	prob_density : function(r, alpha)
+		Probability density function depending on position r and parameters alpha
+	alpha : np.ndarray
+		Parameters of the trial wave functon
+	N_steps : int
+		Number of steps that each random walker takes
+	init_point: np.ndarray(N_walkers, dim)
+		Starting points of all random walkers
+	tm_sigma: float
+		Standard deviation that defines the trial move according to a normal distribution
+
+	Returns
+	-------
+	steps : np.ndarray(N_steps, N_walkers, dim)
+		Steps of the random walker
+	"""
+
+	N_walkers, dim = init_points.shape
+	steps = np.zeros((N_steps, N_walkers, dim))
+	steps[0] = init_points
+
+	for i in np.arange(1, N_steps):
+		print(i, "\r", end="")
+		next_point = steps[i-1] + np.random.normal(0, tm_sigma, size=N_walkers*dim).reshape(N_walkers, dim)
+
+		to_change = np.where(np.random.rand(N_walkers) <= prob_density(*next_point.T, *alpha)/prob_density(*steps[i-1].T, *alpha))
+
+		steps[i] = steps[i-1]
+		steps[i, to_change] = next_point[to_change]
+	
+	print("")
+
+	return steps
+
 
 def rand_init_point(system_size, dim, N_points):
 	"""
@@ -168,9 +214,11 @@ def rand_init_point(system_size, dim, N_points):
 	init_point : np.ndarray(dim)
 		Random initial point for the random walkers
 	"""
+
 	init_point = np.random.normal(scale=system_size, size = (N_points, dim))
 
 	return init_point
+
 
 def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 	"""
@@ -193,6 +241,7 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 	dev_av_ratio: float
 		Average acceptance ratio for a random walker giving N_av steps
 	"""
+
 	av_ratio = 0
 	steps = np.zeros((N_av,dim))
 	steps[0] = np.zeros(dim)
@@ -205,6 +254,7 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 			steps[i] = steps[i-1]
 		av_ratio += ratio
 	dev_av_ratio = av_ratio/N_av -0.5
+
 	return dev_av_ratio
 
 
@@ -232,11 +282,13 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, N_iter = 500,
 	optimal_tm_sigma: float
 		tm_sigma such that the corresponding average accepting ratio is 0.5+-tol
 	"""
-	arguments = (prob_density, alpha, dim, N_av=100)
+
+	arguments = (prob_density, alpha, dim, N_av)
 	opt_tm_sigma = toms748(dev_av_rate, tm_sigma_init/100, tm_sigma_init, args = arguments, maxiter = N_iter, xtol = tol) 
 												# Finds a zero in dev_av_rate between tm_sigma_init and tm_sigma_init/100
 												# the function must be of oposite signs at the two points
 	return opt_tm_sigma
+
 
 def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, normalized = True):
 	"""
@@ -280,6 +332,7 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 	E_alpha = MC_sum(E_local_f, total_steps, alpha)
 
 	return E_alpha
+
 
 def MC_sum(E_local_f, steps, alpha):
 	"""Computes expectation value of energy, E(alpha), given a distribution
