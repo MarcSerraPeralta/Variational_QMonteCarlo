@@ -1,7 +1,7 @@
 from sympy import simplify, lambdify, conjugate, integrate, oo
 from multiprocessing import Pool
 import numpy as np
-from scipy.optimize import toms748 
+from scipy.optimize import brentq 
 
 #######################################
 #	   PROCESS INPUT PARAMETERS
@@ -127,9 +127,9 @@ def random_walker(prob_density, alpha, N_steps, init_point, tm_sigma):
 		Parameters of the trial wave functon
 	N_steps : int
 		Number of steps that the random walker takes
-	init_point: np.ndarray(dim)
+	init_point : np.ndarray(dim)
 		Starting point of the random walker
-	tm_sigma: float
+	tm_sigma : float
 		Standard deviation that defines the trial move according to a normal distribution
 
 	Returns
@@ -169,9 +169,9 @@ def random_walkers(prob_density, alpha, N_steps, init_points, tm_sigma):
 		Parameters of the trial wave functon
 	N_steps : int
 		Number of steps that each random walker takes
-	init_point: np.ndarray(N_walkers, dim)
+	init_point : np.ndarray(N_walkers, dim)
 		Starting points of all random walkers
-	tm_sigma: float
+	tm_sigma : float
 		Standard deviation that defines the trial move according to a normal distribution
 
 	Returns
@@ -230,7 +230,7 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 		Probability density function depending on position r and parameters alpha
 	alpha : np.ndarray
 		Parameters of the trial wave function
-	dim: int
+	dim : int
 		Dimension of the configuration space, i.e. number of degrees of freedom in the system
 	tm_sigma : float
 		Current initial trial move variance
@@ -238,7 +238,7 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 		Number of steps the walker takes to compute the acceptance ratio average
 	Returns
 	-------
-	dev_av_ratio: float
+	dev_av_ratio : float
 		Average acceptance ratio for a random walker giving N_av steps
 	"""
 
@@ -258,7 +258,7 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 	return dev_av_ratio
 
 
-def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, N_iter = 500, N_av=100, tol = 0.05):
+def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, N_iter = 5000, N_av=2000, tol = 0.05):
 	"""
 	Returns tm_sigma such that the corresponding average accepting ratio is 0.5+-tol. 
 
@@ -268,7 +268,7 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, N_iter = 500,
 		Probability density function depending on position r and parameters alpha
 	alpha : np.ndarray
 		Parameters of the trial wave function
-	dim: int
+	dim : int
 		Dimension of the configuration space, i.e. number of degrees of freedom in the system
 	tm_sigma_init : float
 		Initial guess of the initial trial move variance
@@ -284,7 +284,7 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, N_iter = 500,
 	"""
 
 	arguments = (prob_density, alpha, dim, N_av)
-	opt_tm_sigma = toms748(dev_av_rate, tm_sigma_init/100, tm_sigma_init, args = arguments, maxiter = N_iter, xtol = tol) 
+	opt_tm_sigma = brentq(dev_av_rate, tm_sigma_init/1000, 10*tm_sigma_init, args = arguments, maxiter = N_iter, xtol = tol) 
 												# Finds a zero in dev_av_rate between tm_sigma_init and tm_sigma_init/100
 												# the function must be of oposite signs at the two points
 	return opt_tm_sigma
