@@ -1,28 +1,28 @@
 import numpy as np
-from sympy import symbols, diff, exp, pi
+from sympy import symbols, diff, exp, pi, Heaviside, sqrt
 
 import lib as lib
 
 #############################################
 
 # Hamiltonian and trial wavefunction
+	# Harmonic oscillator: 0.5*d^2 psi_t / dx^2 + 0.5*x^2*psi_t^2
 x, alpha = symbols('x alpha', real=True)
 psi_t = (2*alpha/pi)**0.25 * exp(-alpha*x**2) 
-H = -0.5 * diff(psi_t, x, 2) + 0.5 * x**2 * psi_t # Harmonic oscillator: 0.5*d^2 psi_t / dx^2 + 0.5*x^2*psi_t^2
-
+H = -0.5 * diff(psi_t, x, 2) + 0.5 * x**2 * psi_t 
 var = [x, alpha] 
 dim = 1 # dimension of configuration space
 normalized = True # if psi_t is normalized
 
 # Monte Carlo integration params
-N_steps = 5000
+N_steps = 25000
 N_walkers = 250
 N_skip = 100
 L_start = 1
 
 # Alpha optimization params
-init_alpha = np.array([])
-opt_args = {"method":None, "init_alpha": init_alpha}
+init_alpha = np.array([0.25])
+opt_args = {"method":"scan1D", "init_alpha":init_alpha, "step":0.05, "final":0.75}
 
 # Results saving params
 file_name = "output.csv"
@@ -46,5 +46,9 @@ while not optimizer.converged:
 	alpha_list += [alpha]
 
 	optimizer.update_alpha(data)
+
+	if opt_args["method"] == "scan1D":
+		print("E({:0.5f}) = {:0.15f}".format(*alpha, data))
+
 
 lib.save(file_name, alpha_list, data_list)
