@@ -17,7 +17,7 @@ normalized = True # if psi_t is normalized
 # Monte Carlo integration params
 N_steps = 25000
 N_walkers = 250
-N_skip = 100
+N_skip = 1000
 L_start = 1
 
 # Alpha optimization params
@@ -48,7 +48,7 @@ while not optimizer.converged:
 	optimizer.update_alpha(data)
 
 	if opt_args["method"] == "scan1D":
-		print("E({:0.5f}) = {:0.15f}".format(*alpha, data))
+		print("E({:0.5f}) = {:0.15f} | var(E) = {:0.15f}".format(*alpha, *data))
 
 
 lib.save(file_name, alpha_list, data_list)

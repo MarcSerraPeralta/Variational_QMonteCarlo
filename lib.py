@@ -354,15 +354,18 @@ def MC_sum(E_local_f, steps, alpha):
 	-------
 	E_alpha : float
 		Expectation value of the energy for given parameters of the trial wave function
+	E_alpha_std : float
+		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
 	"""
 
 	N_steps = steps.shape[0]
-	E_local_list = np.zeros(N_steps)
 
-	E_local_list = E_local_f(*steps.T, *alpha)
-	E_alpha = np.average(E_local_list)
+	E_local = E_local_f(*steps.T, *alpha)
+	E_local_walkers = np.average(E_local, axis=1)
+	E_alpha = np.average(E_local_walkers)
+	E_alpha_std = np.std(E_local_walkers)
 
-	return E_alpha
+	return E_alpha, E_alpha_std
 
 
 #######################################
@@ -444,7 +447,7 @@ def steepest_descent(alpha_old, args):
 #			  SAVE RESULTS
 #######################################
 
-def save(file_name, alpha_list, data_list):
+def save(file_name, alpha_list, data_list, alpha_labels=None, data_labels=["E", "var(E)"]):
 	"""
 	Saves alpha and data results to file_name.
 
@@ -456,10 +459,37 @@ def save(file_name, alpha_list, data_list):
 		List of alpha values
 	alpha_list : list of list
 		List of data values
+	alpha_labels : list of str
+		Labels for the elements of alpha_list[i]
+		If None, it assumes labels: alpha1, alpha2, alpha3, ...
+	data_labels : list of str
+		Labels for the elements of data_list[i]
+		If None, it assumes labels: data1, data2, data3, ...
 
 	Returns
 	-------
 	None
 	"""
+
+	f = open(file_name, "w")
+	header = ""
+	if alpha_labels is None:
+		header += ",".join(["alpha{}".format(i+1) for i in range(len(alpha_list[0]))]) + ","
+	else: 
+		header += ",".join(alpha_labels) + ","
+	if data_labels is None:
+		header += ",".join(["data{}".format(i+1) for i in range(len(data_list[0]))]) + ","
+	else: 
+		header += ",".join(data_labels) + ","
+	header += "\n"
+	f.write(header)
+
+	for k in range(len(alpha_list)):
+		s = ("{},"*len(alpha_list[k])).format(*alpha_list[k])
+		s += ("{},"*len(data_list[k])).format(*data_list[k])
+		s += "\n"
+		f.write(s)
+
+	f.close()
 
 	return 
