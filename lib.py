@@ -243,8 +243,8 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 	steps[0] = np.zeros(dim)
 
 	for i in np.arange(1, N_av):
-		next_point = steps[i-1] + np.random.normal(scale=tm_sigma, size=(dim,1))
-		ratio = min(prob_density(next_point, alpha)/prob_density(steps[i-1], alpha),1)
+		next_point = steps[i-1] + np.random.normal(scale=tm_sigma, size=(dim))
+		ratio = min(prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha),1)
 		if np.random.rand(1) <= ratio:
 			steps[i] = next_point
 		else:

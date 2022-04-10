@@ -13,16 +13,25 @@ H = -0.5 * diff(psi_t, x, 2) + 0.5 * x**2 * psi_t
 var = [x, alpha] 
 dim = 1 # dimension of configuration space
 normalized = True # if psi_t is normalized
+init_alpha, final_alpha = np.array([0.25]), np.array([0.75])
+
+	# Hydrogen atom (unoptimized)
+x, y, z, alpha = symbols('x y z alpha', real=True)
+psi_t = (alpha**3/pi)**0.5 * exp(-alpha*sqrt(x**2 + y**2 + z**2)) 
+H = -0.5 * (diff(psi_t, x, 2) + diff(psi_t, y, 2) + diff(psi_t, z, 2)) - 1/sqrt(x**2 + y**2 + z**2) * psi_t 
+var = [x, y, z, alpha] 
+dim = 3 # dimension of configuration space
+normalized = True # if psi_t is normalized
+init_alpha, final_alpha = np.array([0.75]), np.array([1.25])
 
 # Monte Carlo integration params
 N_steps = 25000
 N_walkers = 250
 N_skip = 1000
-L_start = 1
+L_start = 5
 
 # Alpha optimization params
-init_alpha = np.array([0.25])
-opt_args = {"method":"scan1D", "init_alpha":init_alpha, "step":0.05, "final":0.75}
+opt_args = {"method":"scan1D", "init_alpha":init_alpha, "step":0.05, "final":final_alpha}
 
 # Results saving params
 file_name = "output.csv"
