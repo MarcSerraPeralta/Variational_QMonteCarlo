@@ -48,7 +48,7 @@ First, we will briefly comment how the tasks from the bulletlist have been perfo
 
 **Results and comments**
 
-After implementing the Metropolis algorithm we have to chech that functions are properly sampled. We perform this analysis for a very simple function, a gaussian. The parameter that needs to be fixed is the trial move standard deviation, because we made a choice to perform trial moves according to a gaussian distribution, which is clearly balanced. 
+After implementing the Metropolis algorithm we have to check that functions are properly sampled. We perform this analysis for a very simple function, a gaussian. The parameter that needs to be fixed is the trial move standard deviation, because we made a choice to perform trial moves according to a gaussian distribution, which is clearly balanced. 
 
 $`\sigma_{tm}=10`$             |  $`\sigma_{tm}=1`$ 
 :-------------------------:|:-------------------------:
@@ -58,9 +58,31 @@ $`\sigma_{tm}=0.01`$             |  $`\sigma_{tm,opt}=1.987`$
 :-------------------------:|:-------------------------:
 ![alt text](results/W1_walker_sig01.png) |  ![alt text](results/W1_walker_sigopt.png)
 
-In these figures we can see how first we sample a gaussian doing 50000 steps for three different values of the trial move. According to the choice of units, a distance of the order of unity if the most appropriate, and this is confirmed by the sampling. When the trial move is 10 the sampling is a bit worse than when it is 1, and the sampling for 0.01 is completely inservible. Finally, we compute an optimal trial move $`\sigma_{tm}=1.987`$, for which the sampling is adapted very nicely to the gaussian. 
+In these figures we can see how first we sample a gaussian doing 50000 steps for three different values of the trial move. According to the choice of units, a distance of the order of unity is the most appropriate, and this is confirmed by the sampling. When the trial move is 10 the sampling is a bit worse than when it is 1, and the sampling for 0.01 is completely inservible. Finally, we compute an optimal trial move $`\sigma_{tm}=1.987`$, for which the sampling is adapted very nicely to the gaussian. 
 
+After implementing the Montecarlo algorithm and the symbolic treatment, we test out our code for the quantum harmonic oscillator. We use the following hamiltonian
 
+$`H = -\frac{1}{2}\frac{d^2 \Psi }{d x^2}+\frac{1}{2}x^2\Psi `$
+
+and the following trial wave function
+
+$`\Psi (x) = (\frac{2\alpha}{\pi})^{1/4} e^{-\alpha x^2},`$
+
+where position is in units of $`\sqrt{\frac{\hbar}{m\omega}}`$ and energy is in units of $`\hbar \omega `$. Therefore, the exact eigenvalues of this hamiltonian are
+
+$`E_n = n+\frac{1}{2}`$.
+
+We now show the expectation values of the energy obtained for different values of $`\alpha`$.
+
+![alt text](results/W1_E_alpha.png)
+
+For each point we first averaged $`E_{local}(x,\alpha)`$ over a distribution of points $`\{x_i\}`$ that follows the probability density function of the trial wave function. The amount of points taken is 25000. We then averaged over 250 walkers, where each walker has a different starting position. The errorbars correspond to the standard deviation of $`E(\alpha)`$ over the 250 walkers. We can see how for $`\alpha = 1/2`$, which corresponds to the exact ground state $`n=0`$, we obtain a minimum energy of $`1/2`$ and a zero standard deviation. The latter is to be expected since if $`E_{local}(x,\alpha)=E_0=1/2`$,  $`\forall x`$ if $`\alpha`$ is the one associated to the ground state.
+
+Finally, we plot the trial move standard deviation that is found to be optimal for each value of $`\alpha`$
+
+![alt text](results/W1_sigma_alpha.png)
+
+It makes sense that the trial move standard deviation decreases as the width of the probability density function decreases, that is, as $`\alpha`$ increases.
 
 (due 18 April 2022, 23:59)
 
