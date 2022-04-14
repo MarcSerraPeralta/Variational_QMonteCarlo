@@ -313,12 +313,17 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 		Length of the box in which the random walkers are initialized randomly
 
 	Returns
+	E_alpha : float
+		Expectation value of the energy for given parameters of the trial wave function
+	E_alpha_std : float
+		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
 	-------
 	...
 	"""
 
 	init_points = rand_init_point(L_start, dim, N_walkers)
 	tm_sigma = find_optimal_tm_sigma(prob_density, alpha, dim, L_start) # I don't know if tm_sigma_init should be L_start
+	print("Optimal sigma is", tm_sigma)
 
 	# initialization of variables and prepare the inputs
 	inputs = [(prob_density, alpha, N_steps, dim, init_points[i], tm_sigma) for i in range(N_walkers)]
@@ -330,9 +335,9 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 
 	# do stuff with data_outputs
 	total_steps = np.array(data_outputs)[N_skip:, :, :]
-	E_alpha = MC_sum(E_local_f, total_steps, alpha)
+	E_alpha, E_alpha_std = MC_sum(E_local_f, total_steps, alpha)
 
-	return E_alpha
+	return E_alpha, E_alpha_std
 
 
 def MC_sum(E_local_f, steps, alpha):
@@ -343,10 +348,11 @@ def MC_sum(E_local_f, steps, alpha):
 	----------
 	E_local_f : function(r, alpha)
 		Local energy function depending on r and alpha
-	steps : np.ndarray
+	steps : np.ndarray(N_steps, N_walkers, dim)
 		Array of points to be used in the computation of the integral.
-		Each row corresponds to a vector (r1 r2 r3 ...), where the ri
-		are the variables over which we take the integral.
+		N_steps is the number of steps each walker takes.
+		N_walkers is the number of walkers.
+		dim is the dimension of the integral space.
 	alpha : np.ndarray
 		Parameters of the trial wave function
 
