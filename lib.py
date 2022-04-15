@@ -290,7 +290,7 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, maxiter=5000,
 	return opt_tm_sigma
 
 
-def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, normalized=True):
+def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
 	"""
 	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers
 	using Monte Carlo integration. 

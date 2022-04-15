@@ -58,11 +58,11 @@ $`\sigma_{tm}=0.01`$             |  $`\sigma_{tm,opt}=1.987`$
 :-------------------------:|:-------------------------:
 ![alt text](results/W1_walker_sig01.png) |  ![alt text](results/W1_walker_sigopt.png)
 
-In these figures we can see how first we sample a gaussian doing 50000 steps for three different values of the trial move. According to the choice of units, a distance of the order of unity is the most appropriate, and this is confirmed by the sampling. When the trial move is 10 the sampling is a bit worse than when it is 1, and the sampling for 0.01 is completely inservible. Finally, we compute an optimal trial move $`\sigma_{tm}=1.987`$, for which the sampling is adapted very nicely to the gaussian. 
+In these figures, we can see the histogram of 50000 steps for three different values of the trial move. According to the choice of units, a distance of the order of unity is the most appropriate from the three histograms, and this is confirmed by the sampling. When the trial move is 10, the sampling is a bit worse than when it is 1. When the sampling is 0.01, it is completely inservible. Finally, we compute an optimal trial move $`\sigma_{tm}=1.987`$, for which the sampling is adapted very nicely to the gaussian. 
 
 After implementing the Montecarlo algorithm and the symbolic treatment, we test out our code for the quantum harmonic oscillator. We use the following hamiltonian
 
-$`H = -\frac{1}{2}\frac{d^2 \Psi }{d x^2}+\frac{1}{2}x^2\Psi `$
+$`H \Psi = -\frac{1}{2}\frac{d^2 \Psi }{d x^2}+\frac{1}{2}x^2\Psi `$
 
 and the following trial wave function
 
@@ -76,7 +76,9 @@ We now show the expectation values of the energy obtained for different values o
 
 ![alt text](results/W1_E_alpha.png)
 
-For each point we first averaged $`E_{local}(x,\alpha)`$ over a distribution of points $`\{x_i\}`$ that follows the probability density function of the trial wave function. The amount of points taken is 25000. We then averaged over 250 walkers, where each walker has a different starting position. The errorbars correspond to the standard deviation of $`E(\alpha)`$ over the 250 walkers. We can see how for $`\alpha = 1/2`$, which corresponds to the exact ground state $`n=0`$, we obtain a minimum energy of $`1/2`$ and a zero standard deviation. The latter is to be expected since if $`E_{local}(x,\alpha)=E_0=1/2`$,  $`\forall x`$ if $`\alpha`$ is the one associated to the ground state.
+For each point, we averaged $`E_{local}(x,\alpha) = H\Psi(x,\alpha) / \Psi(x,\alpha)`$ over a distribution of points $`\{x_i\}`$ that follows the probability density function of the trial wave function in order to get $`E(\alpha)`$ for a single random walker. The amount of points $`\{x_i\}`$ taken is 25000. We then averaged $`E(\alpha)`$ over 250 walkers, where each walker has a different starting position. The errorbars correspond to the standard deviation of $`E(\alpha)`$ over the 250 walkers. We can see how for $`\alpha = 1/2`$, which corresponds to the exact ground state $`n=0`$, we obtain a minimum energy of $`1/2`$ and a zero standard deviation. The latter is to be expected since if $`E_{local}(x,\alpha=1/2)=E_0=1/2`$,  $`\forall x`$.
+
+Noteworthy, the trial wavefunction does not need to be normalized because the Metropolis algorithm works with the ratio $`\Psi(x_{new},\alpha) / \Psi(x_{old},\alpha)`$ and also $`E_{local}(x,\alpha) = H\Psi(x,\alpha) / \Psi(x,\alpha)`$, therefore the normalization constants cancel. 
 
 Finally, we plot the trial move standard deviation that is found to be optimal for each value of $`\alpha`$
 
