@@ -48,7 +48,7 @@ First, we will briefly comment how the tasks from the bulletlist have been perfo
 
 **Results and comments**
 
-After implementing the Metropolis algorithm we have to check that functions are properly sampled. We perform this analysis for a very simple function, a gaussian. The parameter that needs to be fixed is the trial move standard deviation, because we made a choice to perform trial moves according to a gaussian distribution, which is clearly balanced. 
+After implementing the Metropolis algorithm we have to check that functions are properly sampled. We perform this analysis for a very simple function, a gaussian. The parameter that needs to be fixed is the trial move. As we made a choice to perform trial moves according to a Gaussian distribution, the parameter of the trial move is the standard deviation of the Gaussian ($`\sigma_{tm}`$) and the distribution is clearly balanced. 
 
 $`\sigma_{tm}=10`$             |  $`\sigma_{tm}=1`$ 
 :-------------------------:|:-------------------------:
@@ -80,16 +80,25 @@ For each point, we averaged $`E_{local}(x,\alpha) = H\Psi(x,\alpha) / \Psi(x,\al
 
 Noteworthy, the trial wavefunction does not need to be normalized because the Metropolis algorithm works with the ratio $`\Psi(x_{new},\alpha) / \Psi(x_{old},\alpha)`$ and also $`E_{local}(x,\alpha) = H\Psi(x,\alpha) / \Psi(x,\alpha)`$, therefore the normalization constants cancel. 
 
-Finally, we plot the trial move standard deviation that is found to be optimal for each value of $`\alpha`$
+Finally, we plot the optimal trial move parameter ($`\sigma_{tm}`$) for each value of $`\alpha`$
 
 ![alt text](results/W1_sigma_alpha.png)
 
-It makes sense that the trial move standard deviation decreases as the width of the probability density function decreases, that is, as $`\alpha`$ increases.
+It makes sense that the trial move parameter decreases as the width of the probability density function decreases, that is, as $`\alpha`$ increases.
 
 (due 18 April 2022, 23:59)
 
 
 ## Week 2
+
+### Bullet list:
+
+1. Try to implement computational parallelization for different walkers (@mserraperalta).
+2. Implement the steepest descent method (@dbedialaunetar).
+3. Implement the Helium hamiltonian and try to obtain a simplified symbolic representation of E_local (@abermejillo).
+4. Start obtaining numerical results for harmonic oscillator and hydrogen and helium atoms with steepest descent. (@abermejillo, @mserraperalta, @dbedialaunetar)
+5. Discuss extra things to implement (first excited state energy, different minimization algorithms...) (@abermejillo, @mserraperalta, @dbedialaunetar)
+
 (due 25 April 2022, 23:59)
 
 

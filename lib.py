@@ -113,7 +113,7 @@ def E_local_f(r, alpha):
 #	    MONTE CARLO INTEGRATION
 #######################################
 
-def random_walker(prob_density, alpha, N_steps, init_point, tm_sigma):
+def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
 	"""
 	Returns steps of a random walker that follows a Markov chain given a probability
 	density function using the Metropolis algorithm. 
@@ -129,7 +129,7 @@ def random_walker(prob_density, alpha, N_steps, init_point, tm_sigma):
 		Number of steps that the random walker takes
 	init_point : np.ndarray(dim)
 		Starting point of the random walker
-	tm_sigma : float
+	trial_move : float
 		Standard deviation that defines the trial move according to a normal distribution
 
 	Returns
@@ -144,7 +144,7 @@ def random_walker(prob_density, alpha, N_steps, init_point, tm_sigma):
 
 	for i in np.arange(1, N_steps):
 		print("{}/{}\r".format(i+1, N_steps), end="")
-		next_point = steps[i-1] + np.random.normal(0, tm_sigma, size=dim)
+		next_point = steps[i-1] + np.random.normal(0, trial_move, size=dim)
 		if (np.random.rand(1) <= prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha)).all():
 			steps[i] = next_point
 		else:
@@ -153,7 +153,7 @@ def random_walker(prob_density, alpha, N_steps, init_point, tm_sigma):
 	return steps
 
 
-def random_walkers(prob_density, alpha, N_steps, init_points, tm_sigma):
+def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 	"""
 	Returns steps of N_walkers random walkers that follows a Markov chain given a probability
 	density function using the Metropolis algorithm. 
@@ -169,7 +169,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, tm_sigma):
 		Number of steps that each random walker takes
 	init_point : np.ndarray(N_walkers, dim)
 		Starting points of all random walkers
-	tm_sigma : float
+	trial_move : float
 		Standard deviation that defines the trial move according to a normal distribution
 
 	Returns
@@ -184,7 +184,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, tm_sigma):
 
 	for i in np.arange(1, N_steps):
 		print("{}/{}\r".format(i+1, N_steps), end="")
-		next_point = steps[i-1] + np.random.normal(0, tm_sigma, size=N_walkers*dim).reshape(N_walkers, dim)
+		next_point = steps[i-1] + np.random.normal(0, trial_move, size=N_walkers*dim).reshape(N_walkers, dim)
 
 		to_change = np.where(np.random.rand(N_walkers) <= prob_density(*next_point.T, *alpha)/prob_density(*steps[i-1].T, *alpha))
 
@@ -216,7 +216,7 @@ def rand_init_point(system_size, dim, N_points):
 	return init_point
 
 
-def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
+def dev_av_rate(trial_move, prob_density, alpha, dim, N_av=100):
 	"""
 	Returns the deviation of the average acceptance ratio for a random walker giving N_av steps from 0.5
 
@@ -228,7 +228,7 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 		Parameters of the trial wave function
 	dim : int
 		Dimension of the configuration space, i.e. number of degrees of freedom in the system
-	tm_sigma : float
+	trial_move : float
 		Current initial trial move variance
 	N_av : int
 		Number of steps the walker takes to compute the acceptance ratio average
@@ -243,7 +243,7 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 	steps[0] = np.zeros(dim)
 
 	for i in np.arange(1, N_av):
-		next_point = steps[i-1] + np.random.normal(scale=tm_sigma, size=(dim))
+		next_point = steps[i-1] + np.random.normal(scale=trial_move, size=(dim))
 		ratio = min(prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha),1)
 		if np.random.rand(1) <= ratio:
 			steps[i] = next_point
@@ -256,9 +256,9 @@ def dev_av_rate(tm_sigma, prob_density, alpha, dim, N_av=100):
 	return dev_av_ratio
 
 
-def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, maxiter=5000, N_av=2000, tol=0.05):
+def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5000, N_av=2000, tol=0.05):
 	"""
-	Returns tm_sigma such that the corresponding average accepting ratio is 0.5+-tol. 
+	Returns trial_move such that the corresponding average accepting ratio is 0.5+-tol. 
 
 	Parameters
 	----------
@@ -268,7 +268,7 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, maxiter=5000,
 		Parameters of the trial wave function
 	dim : int
 		Dimension of the configuration space, i.e. number of degrees of freedom in the system
-	tm_sigma_init : float
+	trial_move_init : float
 		Initial guess of the initial trial move variance
 	maxiter : int
 		Maximum number of iterations 
@@ -277,17 +277,17 @@ def find_optimal_tm_sigma(prob_density, alpha, dim, tm_sigma_init, maxiter=5000,
 
 	Returns
 	-------
-	optimal_tm_sigma: float
-		tm_sigma such that the corresponding average accepting ratio is 0.5 +- tol
+	opt_trial_move: float
+		trial_move such that the corresponding average accepting ratio is 0.5 +- tol
 	"""
 
 	arguments = (prob_density, alpha, dim, N_av)
 
-	# Find a zero in dev_av_rate between 10*tm_sigma_init and tm_sigma_init/100,
+	# Find a zero in dev_av_rate between 10*trial_move_init and trial_move_init/100,
 	# the function must be of oposite signs at the two points
-	opt_tm_sigma = brentq(dev_av_rate, tm_sigma_init/1000, 10*tm_sigma_init, args=arguments, maxiter=maxiter, xtol=tol) 
+	opt_trial_move = brentq(dev_av_rate, trial_move_init/1000, 10*trial_move_init, args=arguments, maxiter=maxiter, xtol=tol) 
 												
-	return opt_tm_sigma
+	return opt_trial_move
 
 
 def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
@@ -322,16 +322,16 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 	"""
 
 	init_points = rand_init_point(L_start, dim, N_walkers)
-	tm_sigma = find_optimal_tm_sigma(prob_density, alpha, dim, L_start) # I don't know if tm_sigma_init should be L_start
-	print("Optimal sigma is", tm_sigma)
+	trial_move = find_optimal_trial_move(prob_density, alpha, dim, L_start) # I don't know if trial_move_init should be L_start
+	print("Optimal trial_move is", trial_move)
 
 	# initialization of variables and prepare the inputs
-	inputs = [(prob_density, alpha, N_steps, dim, init_points[i], tm_sigma) for i in range(N_walkers)]
+	inputs = [(prob_density, alpha, N_steps, dim, init_points[i], trial_move) for i in range(N_walkers)]
 
 	# multiprocessing
 	#pool = Pool() # uses maximum number of processors available
 	#data_outputs = pool.map(random_walker, inputs)
-	data_outputs = random_walkers(prob_density, alpha, N_steps, init_points, tm_sigma)
+	data_outputs = random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
 
 	# do stuff with data_outputs
 	total_steps = np.array(data_outputs)[N_skip:, :, :]
