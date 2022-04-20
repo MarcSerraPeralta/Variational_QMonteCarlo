@@ -90,6 +90,15 @@ It makes sense that the trial move standard deviation decreases as the width of 
 
 
 ## Week 2
+
+### Bullet list:
+
+1. Try to implement computational parallelization for different walkers (@mserraperalta).
+2. Implement the steepest descent method (@dbedialaunetar).
+3. Implement the Helium hamiltonian and try to obtain a simplified symbolic representation of E_local (@abermejillo).
+4. Start obtaining numerical results for harmonic oscillator and hydrogen and helium atoms with steepest descent. (@abermejillo, @mserraperalta, @dbedialaunetar)
+5. Discuss extra things to implement (first excited state energy, different minimization algorithms...) (@abermejillo, @mserraperalta, @dbedialaunetar)
+
 (due 25 April 2022, 23:59)
 
 
