@@ -1,8 +1,6 @@
 # Project 2: Variational Quantum Monte Carlo
 
-The README.md file serves as a reference for other users visiting your repository.
-It should contain a brief description of your project, and document the steps others need to take to get your application up and running.
-In addition, it should list the authors of the project.
+
 
 ## Setup
 
@@ -12,20 +10,15 @@ Clone this repo and run `pip install -r requirements.txt` to install its depende
 
 Open `main.py` and specify the input parameters:
 
-- Hamiltonian and trial wave function (with parameter $`\alpha`$ to be optimized) defined with symbols from simpy
-    - `x` and `alpha`: define the degrees of freedom in the system and the parameter space with sympy symbols.
-    - `psi_t`: trial wave function in terms of `x` and `alpha`. Does not need to be normalized.
-    - `H_psi_t`: the hamiltonian acting on `psi_t`. It can contain the `diff` operator.
-    - `var`: list with all simpy defined variables (`x` and `alpha`)
+- Hamiltonian and trial wave function
+    - `E_local_f` and `prob_density`: $`E_{local} = \Psi^{-1} \cdot \hat{H}\Psi`$ and $`p_{density} = |\Psi|^2`$, specific of each problem and trial wavefunction. The functions are stored in `inputs.py`. 
     - `dim`: number of degrees of freedom in the system
-    - `init_alpha` and `final_alpha`: range of parameter space where to look for the minimum expected energy.
+    - `opt_args`: defines the optimization algorithm to be used for finding the minimum expectation value of the energy and the parameters associated in a dictionary object. The available algorithms and its parameters are defined below.
 - Monte Carlo integration parameters
     - `N_steps`: number of points to extract from the probability density function for each walker.
     - `N_walkers`: number of walkers. Each walker has a randomly generated initial point according to a normal distribution of standard deviation `L_start`.
     - `N_skip`: number of initial steps to remove from each walker to avoid bias of the initial point.
     - `L_start`: standard deviation of the normal distribution with which each walker is initialized.
-- Alpha optimization parameters
-    - `opt_args`: defines the optimization algorithm to be used for finding the minimum expectation value of the energy and the parameters associated in a dictionary object. The available algorithms and its parameters are defined below.
 - Results saving parameters
     - `file_name`: name of the file in which to store the computed expectation values of the energy.
 
