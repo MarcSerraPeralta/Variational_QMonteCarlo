@@ -1,10 +1,10 @@
 from sympy import simplify, lambdify, conjugate, integrate, oo, DiracDelta
-from multiprocessing import Pool
+import multiprocessing
 import numpy as np
 from scipy.optimize import brentq 
 
 #######################################
-#	   PROCESS INPUT PARAMETERS
+#	   PROCESS INPUT PARAMETERS       #
 #######################################
 
 def get_E_local_f(H, psi_t, var):
@@ -58,59 +58,7 @@ def get_prob_density(psi_t, var):
 
 
 #######################################
-#			   EXAMPLES
-#######################################
-
-def prob_density(r, alpha):
-	"""
-	Returns the value of the probability density function at the specified positions r and parameters alpha.
-
-	dim = dimension of the integral space.
-
-	Parameters
-	----------
-	r : np.ndarray(N*dim)
-		Positions of N particles in the form: r1x, r1y, ..., r2x, r2y, ... 
-	alpha : np.ndarray	
-		Parameters of the trial wave function
-
-	Returns
-	-------
-	prob : np.ndarray(N)
-		Probability density function at the specified r and alpha
-	"""
-
-	prob = 0
-
-	return prob
-
-
-def E_local_f(r, alpha):
-	"""
-	Returns the value of the local energy at the specified positions r and parameters alpha.
-
-	dim = dimension of the integral space.
-
-	Parameters
-	----------
-	r : np.ndarray(N*dim)
-		Positions of N particles in the form: r1x, r1y, ..., r2x, r2y, ... 
-	alpha : np.ndarray
-		Parameters of the trial wave function
-
-	Returns
-	-------
-	E_local : float
-		Local energy at the specified r and alpha
-	"""
-
-	E_local = 0
-
-	return E_local
-
-
-#######################################
-#	    MONTE CARLO INTEGRATION
+#	    MONTE CARLO INTEGRATION       #
 #######################################
 
 def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
@@ -143,8 +91,9 @@ def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
 	steps[0] = init_point
 
 	for i in np.arange(1, N_steps):
-		print("{}/{}\r".format(i+1, N_steps), end="")
+
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=dim)
+
 		if (np.random.rand(1) <= prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha)).all():
 			steps[i] = next_point
 		else:
@@ -183,7 +132,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 	steps[0] = init_points
 
 	for i in np.arange(1, N_steps):
-		print("{}/{}\r".format(i+1, N_steps), end="")
+
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=N_walkers*dim).reshape(N_walkers, dim)
 
 		to_change = np.where(np.random.rand(N_walkers) <= prob_density(*next_point.T, *alpha)/prob_density(*steps[i-1].T, *alpha))
@@ -321,23 +270,33 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 	...
 	"""
 
-	init_points = rand_init_point(L_start, dim, N_walkers)
-	trial_move = find_optimal_trial_move(prob_density, alpha, dim, L_start) # I don't know if trial_move_init should be L_start
-	print("Optimal trial_move is", trial_move)
+	trial_move = find_optimal_trial_move(prob_density, alpha, dim, 0.5*L_start) 
+	print("Optimal trial_move is", trial_move, end="\r")
 
-	# initialization of variables and prepare the inputs
-	inputs = [(prob_density, alpha, N_steps, dim, init_points[i], trial_move) for i in range(N_walkers)]
+	# separate number of walkers for each core (multiprocessing)
+	N_cores = multiprocessing.cpu_count()
+	N_walkers_per_core = int(N_walkers/N_cores)
+	N_walkers_last_core = N_walkers - (N_cores-1)*N_walkers_per_core
+	list_N_walkers = np.array([N_walkers_per_core]*(N_cores - 1) + [N_walkers_last_core])
 
 	# multiprocessing
-	#pool = Pool() # uses maximum number of processors available
-	#data_outputs = pool.map(random_walker, inputs)
-	data_outputs = random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
+	with multiprocessing.Pool() as pool: # uses maximum number of processors available
+		inputs = [(prob_density, alpha, N_steps, rand_init_point(L_start, dim, N), trial_move) for N in list_N_walkers]
+		data_outputs = pool.starmap(random_walkers, inputs)
 
-	# do stuff with data_outputs
-	total_steps = np.array(data_outputs)[N_skip:, :, :]
-	E_alpha, E_alpha_std = MC_sum(E_local_f, total_steps, alpha)
+		total_steps = [np.array(data)[N_skip:, :, :] for data in data_outputs]
 
-	return E_alpha, E_alpha_std
+		inputs = [(E_local_f, t_steps, alpha) for t_steps in total_steps]
+		E_output = pool.starmap(MC_sum, inputs)
+
+	# average the differents processes
+	list_E_alpha = np.array([i[0] for i in E_output])
+	list_E_alpha_std = np.array([i[1] for i in E_output])
+
+	E_alpha = sum(list_N_walkers*list_E_alpha)/N_walkers
+	E_alpha_std = np.sqrt(sum(list_N_walkers*list_E_alpha_std**2)/N_walkers)
+
+	return E_alpha, E_alpha_std 
 
 
 def MC_sum(E_local_f, steps, alpha):
