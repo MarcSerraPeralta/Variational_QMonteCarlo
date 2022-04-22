@@ -12,9 +12,15 @@ prob_density = prob_density_Harmonic_Oscillator
 dim = 1 # dimension of configuration space
 opt_args = {"method":"scan1D", "init_alpha":np.array([0.25]), "step":0.05, "final":np.array([0.75])}
 
+# HYDROGEN ATOM
+E_local_f = E_local_Hydrogen_atom
+prob_density = prob_density_Hydrogen_atom
+dim = 3 # dimension of configuration space
+opt_args = {"method":"scan1D", "init_alpha":np.array([0.75]), "step":0.05, "final":np.array([1.25])}
+
 # Monte Carlo integration params
 N_steps = 25000
-N_walkers = 250
+N_walkers = 250*4
 N_skip = 1000
 L_start = 5
 

@@ -323,12 +323,12 @@ def MC_sum(E_local_f, steps, alpha):
 		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
 	"""
 
-	N_steps = steps.shape[0]
+	N_steps, N_walkers = steps.shape[0], steps.shape[1]
 
 	E_local = E_local_f(*steps.T, *alpha)
 	E_local_walkers = np.average(E_local, axis=1)
 	E_alpha = np.average(E_local_walkers)
-	E_alpha_std = np.std(E_local_walkers)
+	E_alpha_std = np.std(E_local_walkers) / np.sqrt(N_walkers) # standard deviation of an average
 
 	return E_alpha, E_alpha_std
 
