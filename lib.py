@@ -239,7 +239,7 @@ def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5
 	return opt_trial_move
 
 
-def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
+def MC_integration(E_local_f, prob_density, alpha, dim, diff_ratio = None, diff_E_local_f = None, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
 	"""
 	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers
 	using Monte Carlo integration. 
@@ -266,13 +266,16 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 		Expectation value of the energy for given parameters of the trial wave function
 	E_alpha_std : float
 		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
+	diff_E_alpha : float
+		Derivative with respect to alpha of E_alpha
 	-------
 	...
 	"""
 
+	"""
 	trial_move = find_optimal_trial_move(prob_density, alpha, dim, 0.5*L_start) 
 	print("Optimal trial_move is", trial_move, end="\r")
-
+	
 	# separate number of walkers for each core (multiprocessing)
 	N_cores = multiprocessing.cpu_count()
 	N_walkers_per_core = int(N_walkers/N_cores)
@@ -289,14 +292,38 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 		inputs = [(E_local_f, t_steps, alpha) for t_steps in total_steps]
 		E_output = pool.starmap(MC_sum, inputs)
 
+		diff_inputs = [(diff_E_local_f, t_steps, alpha) for t_steps in total_steps]
+		diff_E_output = pool.starmap(MC_sum, diff_inputs)
+
 	# average the differents processes
 	list_E_alpha = np.array([i[0] for i in E_output])
 	list_E_alpha_std = np.array([i[1] for i in E_output])
+	list_diff_E_alpha = np.array(i[0] for i in diff_E_output)
 
 	E_alpha = sum(list_N_walkers*list_E_alpha)/N_walkers
 	E_alpha_std = np.sqrt(sum(list_N_walkers*list_E_alpha_std**2)/N_walkers)
+	diff_E_alpha = sum(list_N_walkers*list_diff_E_alpha)/N_walkers
+	"""
+	
+	init_points = rand_init_point(L_start, dim, N_walkers)
+	trial_move = find_optimal_trial_move(prob_density, alpha, dim, L_start) # I don't know if trial_move_init should be L_start
+	print("Optimal trial_move is", trial_move)
 
-	return E_alpha, E_alpha_std 
+	# initialization of variables and prepare the inputs
+	inputs = [(prob_density, alpha, N_steps, dim, init_points[i], trial_move) for i in range(N_walkers)]
+	data_outputs = random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
+
+	# do stuff with data_outputs
+	total_steps = np.array(data_outputs)[N_skip:, :, :]
+	E_alpha, E_alpha_std = MC_sum(E_local_f, total_steps, alpha)
+
+	if diff_ratio == None:
+		diff_E_alpha = 0
+	else:
+		diff_E_alpha_local = lambda x, y, z, alpha: 2*(E_local_f(x,y,z,alpha)-E_alpha)*diff_ratio(x,y,z,alpha)
+		diff_E_alpha, diff_E_alpha_std = MC_sum(diff_E_alpha_local, total_steps, alpha)
+
+	return E_alpha, E_alpha_std, diff_E_alpha
 
 
 def MC_sum(E_local_f, steps, alpha):
@@ -314,6 +341,8 @@ def MC_sum(E_local_f, steps, alpha):
 		dim is the dimension of the integral space.
 	alpha : np.ndarray
 		Parameters of the trial wave function
+	diff : boolean
+		Specifies whether
 
 	Returns
 	-------
@@ -323,12 +352,13 @@ def MC_sum(E_local_f, steps, alpha):
 		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
 	"""
 
+	alpha_dim_bool = alpha>1 # If the dimension of alpha is greater than 1, then E_local will be of size len(alpha) x N_walkers x N_steps
 	N_steps, N_walkers = steps.shape[0], steps.shape[1]
 
 	E_local = E_local_f(*steps.T, *alpha)
-	E_local_walkers = np.average(E_local, axis=1)
-	E_alpha = np.average(E_local_walkers)
-	E_alpha_std = np.std(E_local_walkers) / np.sqrt(N_walkers) # standard deviation of an average
+	E_alpha_walkers = np.average(E_local, axis=int(1+alpha_dim_bool))
+	E_alpha = np.average(E_alpha_walkers, axis=int(alpha_dim_bool))
+	E_alpha_std = np.std(E_alpha_walkers, axis=int(alpha_dim_bool)) / np.sqrt(N_walkers) # standard deviation of an average
 
 	return E_alpha, E_alpha_std
 
@@ -366,6 +396,9 @@ class Optimizer:
 			self.final = opt_args["final"]
 			self.alpha_range = np.arange(self.alpha[0], self.final + self.step, self.step).tolist()
 			self.alpha = np.array([self.alpha_range.pop(0)]) # deletes also first element from list
+		elif self.method == "steepest_descent":
+			self.step = opt_args["step"] # Step for updating alpha
+			self.precision = opt_args["precision"] # Precision of the sequence of alphas
 		return
 
 	def update_alpha(self, args):
@@ -376,8 +409,11 @@ class Optimizer:
 				self.converged = True
 
 		elif self.method == "steepest_descent":
-			self.alpha = steepest_descent(self.alpha, self.args)
-			if True:
+			alpha_new = steepest_descent(self.alpha, self.step, args)
+			#print(self.alpha, alpha_new, args[2])
+			if np.abs((alpha_new-self.alpha)/self.alpha) > self.precision:
+				self.alpha = alpha_new
+			else:
 				self.converged = True
 
 		else: 
@@ -386,7 +422,7 @@ class Optimizer:
 		return
 
 
-def steepest_descent(alpha_old, args):
+def steepest_descent(alpha_old, step, args):
 	"""
 	Returns the new value of alpha using the method of steepest descent.
 
@@ -403,7 +439,7 @@ def steepest_descent(alpha_old, args):
 		New value of alpha
 	"""
 
-	alpha_new = 0
+	alpha_new = alpha_old - step*args[2]
 
 	return alpha_new
 

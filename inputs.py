@@ -76,7 +76,6 @@ def E_local_Harmonic_Oscillator(x, alpha):
 
 	return E_local
 
-
 def prob_density_Harmonic_Oscillator(x, alpha):
 	"""
 	Returns the value of the probability density function for the 1D Harmonic Oscillator
@@ -98,6 +97,30 @@ def prob_density_Harmonic_Oscillator(x, alpha):
 	prob = np.exp(-2*alpha*x**2)
 
 	return prob
+
+def diff_wave_function_ratio_Harmonic_Oscillator(x, alpha):
+	"""
+	Returns the value Psi'(x,alpha)/Psi(x,alpha) where Psi' denotes the
+	derivative of the wave function with respect to alpha for the 1D 
+	Harmonic Oscillator	at the specified positions x and parameters alpha.
+	The wave function Psi must be normalized.
+
+	Parameters
+	----------
+	x : np.ndarray(N)
+		Position of N particles
+	alpha : np.ndarray	
+		Parameter of the trial wave function
+
+	Returns
+	-------
+	ratio : np.ndarray(N)
+		Ratio Psi'(x,alpha)/Psi(x,alpha) at the specified x and alpha
+	"""
+
+	ratio = 1/(4*alpha)-x**2
+
+	return ratio
 
 
 ################################
@@ -152,3 +175,27 @@ def prob_density_Hydrogen_atom(x, y, z, alpha):
 	prob = np.exp(-2*alpha*r)
 
 	return prob
+
+def diff_wave_function_ratio_Hydrogen_atom(x, y, z, alpha):
+	"""
+	Returns the value Psi'(x,alpha)/Psi(x,alpha) where Psi' denotes the
+	derivative of the wave function with respect to alpha for the Hydrogen 
+	atom at the specified positions x and parameters alpha.
+	The wave function Psi must be normalized.
+
+	Parameters
+	----------
+	x,y,z : np.ndarray(N)
+		Position of N particles
+	alpha : np.ndarray	
+		Parameter of the trial wave function
+
+	Returns
+	-------
+	ratio : np.ndarray(N)
+		Ratio Psi'(x,alpha)/Psi(x,alpha) at the specified x and alpha
+	"""
+
+	ratio = 3/(2*alpha)-np.sqrt(x**2+y**2+z**2)
+
+	return ratio
