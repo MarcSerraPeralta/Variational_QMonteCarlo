@@ -181,6 +181,7 @@ def dev_av_rate(trial_move, prob_density, alpha, dim, N_av=100):
 		Current initial trial move variance
 	N_av : int
 		Number of steps the walker takes to compute the acceptance ratio average
+
 	Returns
 	-------
 	dev_av_ratio : float
@@ -239,7 +240,7 @@ def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5
 	return opt_trial_move
 
 
-def MC_integration(E_local_f, prob_density, alpha, dim, diff_ratio = None, diff_E_local_f = None, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
+def MC_integration(E_local_f, prob_density, alpha, dim, diff_ratio = None, diff_E_local_f = None, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, N_cores=-1, trial_move=None):
 	"""
 	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers
 	using Monte Carlo integration. 
@@ -260,30 +261,33 @@ def MC_integration(E_local_f, prob_density, alpha, dim, diff_ratio = None, diff_
 		Number of initial steps to skip for the integration
 	L_start : float
 		Length of the box in which the random walkers are initialized randomly
+	N_cores : int
+		Number of cores to use for parallisation
+		If -1, it sets to the maximum number of cores available
+	trial_move : float
+		Trial move for the random walkers
+		If None, finds the optimal trial move. 
 
 	Returns
+	-------
 	E_alpha : float
 		Expectation value of the energy for given parameters of the trial wave function
 	E_alpha_std : float
 		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
-	diff_E_alpha : float
-		Derivative with respect to alpha of E_alpha
-	-------
-	...
 	"""
+	"""
+	if trial_move is None:
+		trial_move = find_optimal_trial_move(prob_density, alpha, dim, 0.5*L_start) 
+		print("Optimal trial_move is", trial_move, end="\r")
 
-	"""
-	trial_move = find_optimal_trial_move(prob_density, alpha, dim, 0.5*L_start) 
-	print("Optimal trial_move is", trial_move, end="\r")
-	
 	# separate number of walkers for each core (multiprocessing)
-	N_cores = multiprocessing.cpu_count()
+	if N_cores == -1: N_cores = multiprocessing.cpu_count()
 	N_walkers_per_core = int(N_walkers/N_cores)
 	N_walkers_last_core = N_walkers - (N_cores-1)*N_walkers_per_core
 	list_N_walkers = np.array([N_walkers_per_core]*(N_cores - 1) + [N_walkers_last_core])
 
 	# multiprocessing
-	with multiprocessing.Pool() as pool: # uses maximum number of processors available
+	with multiprocessing.Pool(processes=N_cores) as pool: 
 		inputs = [(prob_density, alpha, N_steps, rand_init_point(L_start, dim, N), trial_move) for N in list_N_walkers]
 		data_outputs = pool.starmap(random_walkers, inputs)
 
@@ -355,8 +359,8 @@ def MC_sum(E_local_f, steps, alpha):
 	alpha_dim_bool = alpha>1 # If the dimension of alpha is greater than 1, then E_local will be of size len(alpha) x N_walkers x N_steps
 	N_steps, N_walkers = steps.shape[0], steps.shape[1]
 
-	E_local = E_local_f(*steps.T, *alpha)
-	E_alpha_walkers = np.average(E_local, axis=int(1+alpha_dim_bool))
+	E_local = E_local_f(*steps.T, *alpha) # E_local.shape = N_walkers, N_steps
+	E_alpha_walkers = np.average(E_local, axis=int(1+alpha_dim_bool)) # E_alpha_walkers.shape = N_walkers
 	E_alpha = np.average(E_alpha_walkers, axis=int(alpha_dim_bool))
 	E_alpha_std = np.std(E_alpha_walkers, axis=int(alpha_dim_bool)) / np.sqrt(N_walkers) # standard deviation of an average
 
