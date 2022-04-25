@@ -1,60 +1,7 @@
-from sympy import simplify, lambdify, conjugate, integrate, oo, DiracDelta
 import multiprocessing
 import numpy as np
 from scipy.optimize import brentq 
-
-#######################################
-#	   PROCESS INPUT PARAMETERS       #
-#######################################
-
-def get_E_local_f(H, psi_t, var):
-	"""
-	Returns the function local energy given a Hamiltonian an trial wave function.
-
-	Parameters
-	----------
-	H : sympy expression
-		Hamiltonian of the system
-	psi_t : sympy expression
-		Trial wavefunction
-	var : sympy symbols
-		Variables for position r and for parameters alpha
-
-	Returns
-	-------
-	E_local_f : function(r, alpha)
-		Local energy function depending on r and alpha
-	"""
-
-	E_local_f = H/psi_t
-	E_local_f = simplify(E_local_f)
-	E_local_f = lambdify(var, E_local_f, modules=['numpy'])
-
-	return E_local_f
-
-
-def get_prob_density(psi_t, var):
-	"""
-	Returns the probability density function for metropolis algorithm given a trial wave function.
-
-	Parameters
-	----------
-	psi_t : sympy expression
-		Trial wavefunction
-	var : sympy symbols
-		Variables for position r and for parameters alpha
-
-	Returns
-	-------
-	prob_density : function(r, alpha)
-		Probability density function for the specified trial wave function
-	"""
-
-	prob_density = conjugate(psi_t)*psi_t
-	prob_density = simplify(prob_density)
-	prob_density = lambdify(var, prob_density, modules=['numpy'])
-
-	return prob_density
+from sympy import simplify, lambdify, conjugate
 
 
 #######################################
@@ -240,7 +187,7 @@ def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5
 	return opt_trial_move
 
 
-def MC_integration(E_local_f, prob_density, alpha, dim, diff_ratio = None, diff_E_local_f = None, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, N_cores=-1, trial_move=None):
+def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, N_cores=-1, trial_move=None):
 	"""
 	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers
 	using Monte Carlo integration. 
@@ -275,7 +222,7 @@ def MC_integration(E_local_f, prob_density, alpha, dim, diff_ratio = None, diff_
 	E_alpha_std : float
 		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
 	"""
-	"""
+
 	if trial_move is None:
 		trial_move = find_optimal_trial_move(prob_density, alpha, dim, 0.5*L_start) 
 		print("Optimal trial_move is", trial_move, end="\r")
@@ -296,38 +243,14 @@ def MC_integration(E_local_f, prob_density, alpha, dim, diff_ratio = None, diff_
 		inputs = [(E_local_f, t_steps, alpha) for t_steps in total_steps]
 		E_output = pool.starmap(MC_sum, inputs)
 
-		diff_inputs = [(diff_E_local_f, t_steps, alpha) for t_steps in total_steps]
-		diff_E_output = pool.starmap(MC_sum, diff_inputs)
-
 	# average the differents processes
 	list_E_alpha = np.array([i[0] for i in E_output])
 	list_E_alpha_std = np.array([i[1] for i in E_output])
-	list_diff_E_alpha = np.array(i[0] for i in diff_E_output)
 
 	E_alpha = sum(list_N_walkers*list_E_alpha)/N_walkers
 	E_alpha_std = np.sqrt(sum(list_N_walkers*list_E_alpha_std**2)/N_walkers)
-	diff_E_alpha = sum(list_N_walkers*list_diff_E_alpha)/N_walkers
-	"""
-	
-	init_points = rand_init_point(L_start, dim, N_walkers)
-	trial_move = find_optimal_trial_move(prob_density, alpha, dim, L_start) # I don't know if trial_move_init should be L_start
-	print("Optimal trial_move is", trial_move)
 
-	# initialization of variables and prepare the inputs
-	inputs = [(prob_density, alpha, N_steps, dim, init_points[i], trial_move) for i in range(N_walkers)]
-	data_outputs = random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
-
-	# do stuff with data_outputs
-	total_steps = np.array(data_outputs)[N_skip:, :, :]
-	E_alpha, E_alpha_std = MC_sum(E_local_f, total_steps, alpha)
-
-	if diff_ratio == None:
-		diff_E_alpha = 0
-	else:
-		diff_E_alpha_local = lambda x, y, z, alpha: 2*(E_local_f(x,y,z,alpha)-E_alpha)*diff_ratio(x,y,z,alpha)
-		diff_E_alpha, diff_E_alpha_std = MC_sum(diff_E_alpha_local, total_steps, alpha)
-
-	return E_alpha, E_alpha_std, diff_E_alpha
+	return E_alpha, E_alpha_std 
 
 
 def MC_sum(E_local_f, steps, alpha):
@@ -345,8 +268,6 @@ def MC_sum(E_local_f, steps, alpha):
 		dim is the dimension of the integral space.
 	alpha : np.ndarray
 		Parameters of the trial wave function
-	diff : boolean
-		Specifies whether
 
 	Returns
 	-------
@@ -356,13 +277,12 @@ def MC_sum(E_local_f, steps, alpha):
 		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
 	"""
 
-	alpha_dim_bool = alpha>1 # If the dimension of alpha is greater than 1, then E_local will be of size len(alpha) x N_walkers x N_steps
 	N_steps, N_walkers = steps.shape[0], steps.shape[1]
 
 	E_local = E_local_f(*steps.T, *alpha) # E_local.shape = N_walkers, N_steps
-	E_alpha_walkers = np.average(E_local, axis=int(1+alpha_dim_bool)) # E_alpha_walkers.shape = N_walkers
-	E_alpha = np.average(E_alpha_walkers, axis=int(alpha_dim_bool))
-	E_alpha_std = np.std(E_alpha_walkers, axis=int(alpha_dim_bool)) / np.sqrt(N_walkers) # standard deviation of an average
+	E_alpha_walkers = np.average(E_local, axis=1) # E_alpha_walkers.shape = N_walkers
+	E_alpha = np.average(E_alpha_walkers)
+	E_alpha_std = np.std(E_alpha_walkers) / np.sqrt(N_walkers) # standard deviation of an average
 
 	return E_alpha, E_alpha_std
 
@@ -400,22 +320,40 @@ class Optimizer:
 			self.final = opt_args["final"]
 			self.alpha_range = np.arange(self.alpha[0], self.final + self.step, self.step).tolist()
 			self.alpha = np.array([self.alpha_range.pop(0)]) # deletes also first element from list
-		elif self.method == "steepest_descent":
-			self.step = opt_args["step"] # Step for updating alpha
-			self.precision = opt_args["precision"] # Precision of the sequence of alphas
+
+		elif self.method == "steepest_descent1D":
+			self.gamma = opt_args["gamma"] 
+			self.init_step = opt_args["init_step"]
+			self.precision = opt_args["precision"]
+			self.alpha_old = None
+			self.E_old = None
+
 		return
 
-	def update_alpha(self, args):
+	def update_alpha(self, args=None):
 		if self.method == "scan1D":
 			if len(self.alpha_range) != 0:
 				self.alpha = np.array([self.alpha_range.pop(0)]) # deletes also first element from list
 			else:
 				self.converged = True
 
-		elif self.method == "steepest_descent":
-			alpha_new = steepest_descent(self.alpha, self.step, args)
-			#print(self.alpha, alpha_new, args[2])
-			if np.abs((alpha_new-self.alpha)/self.alpha) > self.precision:
+		elif self.method == "steepest_descent1D":
+			E_current = args[0]
+
+			# first iteration (cannot calculate the numerical gradient)
+			if self.alpha_old is None:
+				self.alpha_old = self.alpha
+				self.alpha = self.alpha + self.init_step
+				self.E_old = E_current
+				return 
+
+			# numerical derivative and steepest descent
+			dE_dalpha = (E_current - self.E_old)/(self.alpha - self.alpha_old)
+			alpha_new = steepest_descent(self.alpha, [self.gamma, dE_dalpha])
+
+			if np.abs((alpha_new - self.alpha)/self.alpha) > self.precision:
+				self.alpha_old = self.alpha
+				self.E_old = E_current
 				self.alpha = alpha_new
 			else:
 				self.converged = True
@@ -426,7 +364,7 @@ class Optimizer:
 		return
 
 
-def steepest_descent(alpha_old, step, args):
+def steepest_descent(alpha_old, args):
 	"""
 	Returns the new value of alpha using the method of steepest descent.
 
@@ -443,7 +381,9 @@ def steepest_descent(alpha_old, step, args):
 		New value of alpha
 	"""
 
-	alpha_new = alpha_old - step*args[2]
+	gamma, dE_dalpha = args
+
+	alpha_new = alpha_old - gamma*dE_dalpha
 
 	return alpha_new
 
@@ -498,3 +438,57 @@ def save(file_name, alpha_list, data_list, alpha_labels=None, data_labels=["E", 
 	f.close()
 
 	return 
+
+
+#######################################
+#	   PROCESS INPUT PARAMETERS       #
+#######################################
+
+def get_E_local_f(H, psi_t, var):
+	"""
+	Returns the function local energy given a Hamiltonian an trial wave function.
+
+	Parameters
+	----------
+	H : sympy expression
+		Hamiltonian of the system
+	psi_t : sympy expression
+		Trial wavefunction
+	var : sympy symbols
+		Variables for position r and for parameters alpha
+
+	Returns
+	-------
+	E_local_f : function(r, alpha)
+		Local energy function depending on r and alpha
+	"""
+
+	E_local_f = H/psi_t
+	E_local_f = simplify(E_local_f)
+	E_local_f = lambdify(var, E_local_f, modules=['numpy'])
+
+	return E_local_f
+
+
+def get_prob_density(psi_t, var):
+	"""
+	Returns the probability density function for metropolis algorithm given a trial wave function.
+
+	Parameters
+	----------
+	psi_t : sympy expression
+		Trial wavefunction
+	var : sympy symbols
+		Variables for position r and for parameters alpha
+
+	Returns
+	-------
+	prob_density : function(r, alpha)
+		Probability density function for the specified trial wave function
+	"""
+
+	prob_density = conjugate(psi_t)*psi_t
+	prob_density = simplify(prob_density)
+	prob_density = lambdify(var, prob_density, modules=['numpy'])
+
+	return prob_density
