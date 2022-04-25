@@ -6,6 +6,8 @@
 
 Clone this repo and run `pip install -r requirements.txt` to install its dependencies.
 
+**Important note**: For Windows users only, `if __name__ == '__main__':` has to be added to `main.py` right after the import of libraries. Therefore, the code below has to be indented one tab to the right. This is so that the multiprocessing of different walkers works correctly.
+
 ## Usage
 
 Open `main.py` and specify the input parameters:
