@@ -1,6 +1,10 @@
 # Project 2: Variational Quantum Monte Carlo
 
+Variational Quantum Monte Carlo to approximate the ground state of a quantum system given a trial wavefunction with a set of free parameters. 
 
+The best approximation is found by minimizing the expectation value of the energy $`\langle E\rangle (\bm{\alpha})`$ with respect to $`\bm{\alpha}`$, with $`\bm{\alpha}`$ the set of free parameters. The expectation value of the energy is computed using Monte Carlo integration and sampling from the probability density function using the Metropolis algorithm. The minimization of the expectation value is done performing a scan of a region of parameter space or using the steepest descent method.
+
+The necessary problem-related inputs are the probability density function $`|\Psi_\text{T}(\bm{r},\bm{\alpha})|^2`$ and the local energy function $`E_\text{loc}(\bm{r}, \bm{\alpha}) = \frac{H\Psi_\text{T}(\bm{r},\bm{\alpha})}{\Psi_\text{T}(\bm{r},\bm{\alpha})}`$.
 
 ## Setup
 
