@@ -25,10 +25,15 @@ Open `main.py` and specify the input parameters:
     - `file_name`: name of the file in which to store the computed expectation values of the energy.
 
 ## Optimization algorithms
-- scan1D: Scans the parameter space from `init_alpha` to `final_alpha` with a given step. The parameters to specify are:
-    - Initial alpha: this will be given by `init_alpha`.
-    - Step: to be specified by user.
-    - Final alpha: this will be given by `final_alpha`
+- scan1D: Scans the parameter space from an initial alpha to a final alpha with a given step. The parameters to specify are:
+    - Initial alpha: this will be given in `"init_alpha"`.
+    - Step: this will be given in `"step"`
+    - Final alpha: this will be given in `"final_alpha"`.
+- steepest_descent1D: Searches for the minimum expectation value of the energy using gradient descent. The parameters to specify are:
+    - Initial alpha: this will be given in `"init_alpha"`.
+    - Initial step: The derivative of the energy with respect to alpha is computed numerically. The initial step indicates the displacement in alpha to be used for the first computation of the derivative. This will be given in `"init_step"`.
+    - Gamma: The parameter $`\alpha`$ is updated in the following way: $`\alpha_{\text{new}}=\alpha_{\text{old}}-\gamma \frac{dE}{d\alpha}`$. The $`\gamma`$ factor serves the purpose of damping the gradient descent. This will be given in `"gamma"`.
+    - Precision: Desired precision with which to find the local minimum. Let $`\epsilon`$ be this precision, then the minimization algorithm stops when $`|(\alpha_{\text{new}}-\alpha_{\text{old}})/\alpha_{\text{old}}|<\epsilon`$. This will be given in `"precision"`.
 
 ## Authors 
 - Álvaro Bermejillo Seco
