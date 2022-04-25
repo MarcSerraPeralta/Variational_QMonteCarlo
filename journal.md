@@ -99,6 +99,54 @@ It makes sense that the trial move parameter decreases as the width of the proba
 4. Start obtaining numerical results for harmonic oscillator and hydrogen and helium atoms with steepest descent. (@abermejillo, @mserraperalta, @dbedialaunetar)
 5. Discuss extra things to implement (first excited state energy, different minimization algorithms...) (@abermejillo, @mserraperalta, @dbedialaunetar)
 
+### Progress: 
+
+1. @mserraperalta implemented the [parallelization](31cea9d1d7c9b800d50baa59b2786f9bd1285688) of walkers and did a [timing analysis](7d8afe555337182aa85996e9677be5e1b566c755) comparing computations with parallelization. @dbedialaunetar found a problem and a solution to the parallelization in a windows OS explaind in the [README](0909d34fff760b9505a02db16066e1135e28559e). 
+2. @dbedialaunetar implementet the [steepest descent method](d1e5aab13efcef8f83f5fc14405cabc7ff71fb96) with an analytical approach and @mserraperalta implemented it [numerically](05722916ab00f451a95aa7367053b652414d63f4).
+3. @abermejillo tried to improve symbolic computation by using mathematica instead of simpy. In the end he implemented a numerical approach for the [E_local of the Helium atom](08a792af8578a7d01134321404cdc19733d27924).
+
+**Results and comments**
+
+The Variational Quantum Monte Carlo is the perfect algorithm to implement parallelized processes in which different walkers are generated separately. This is done in python via a library called multiprocessing. An analysis of the benefit this approach brings was done and the results are shown in the following table for increasing amount of walkers for 25,000 steps
+
+Number of walkers           | time[s] (1 core) | time[s] (4 cores)
+:-------------------------:|:-------------------------:|:-------------------------:
+ 250| 1.97 | 2.20
+ 1000|4.64|3.91
+ 4000|14.9|10.1 
+
+We can see that if the number of walkers is high, there is an increase of the performance using parallelization (although it is not by a factor of 4). And in the next table for increasing number of steps of each walker for 1,000 walkers
+
+Number of steps           | time[s] (1 core) | time[s] (4 cores)
+:-------------------------:|:-------------------------:|:-------------------------:
+ 2500| 0.54 | 0.49
+ 25000|4.87|4.16
+ 50000|9.30|8.33
+75000|14.7|12.5
+
+Here we can see that the decrease in run time using more cores is not as good as when varying the number of walkers, but there is still an advantage.  In order to have get the maximum advantage, all operations should be parallelized, which is not the case in our script. This will be discussed for next week.
+
+In order to show that the steepest descent method works we show results for the Hydrogen atom. 
+
+Energy($`\alpha`$)           | Variance(E)
+:-------------------------:|:-------------------------:
+E(0.7500000) = -0.468773517423537 | var(E) = 0.000382813001703
+E(0.8000000) = -0.480007940902344 | var(E) = 0.000309257553983
+E(0.8561721) = -0.489718355285708 | var(E) = 0.000244191116223
+E(0.8993894) = -0.494939687705365 | var(E) = 0.000176918907625
+E(0.9295933) = -0.497542602378653 | var(E) = 0.000134685913367
+E(0.9511378) = -0.498798018343832 | var(E) = 0.000091811032635
+E(0.9657055) = -0.499423280203444 | var(E) = 0.000064533778343
+E(0.9764358) = -0.499699941901200 | var(E) = 0.000044718674631
+E(0.9828816) = -0.499847871572190 | var(E) = 0.000032776923049
+E(0.9886190) = -0.499936068661564 | var(E) = 0.000021438067264
+E(0.9924621) = -0.499974008600859 | var(E) = 0.000015704293168
+E(0.9949302) = -0.499986968297463 | var(E) = 0.000010002118490
+E(0.9962429) = -0.499995004621390 | var(E) = 0.000007280616394
+E(0.9977734) = -0.499996372657338 | var(E) = 0.000004331229248
+
+Where we can see how the method works correctly reaches a value of $`E(0.9977734) = -0.499996 \pm 0.000004 `$ where the exact value is $`\alpha=1`$ and E(1)=-0.5.
+
 (due 25 April 2022, 23:59)
 
 
