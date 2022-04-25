@@ -15,13 +15,13 @@ opt_args = {"method":"scan1D", "init_alpha":np.array([0.25]), "step":0.05, "fina
 E_local_f = E_local_Hydrogen_atom
 prob_density = prob_density_Hydrogen_atom
 dim = 3 # dimension of configuration space
-#opt_args = {"method":"scan1D", "init_alpha":np.array([0.75]), "step":0.05, "final":np.array([1.25])}
+opt_args = {"method":"scan1D", "init_alpha":np.array([0.75]), "step":0.05, "final":np.array([1.25])}
 opt_args = {"method":"steepest_descent1D", "init_alpha":np.array([0.75]), "init_step":0.05, "gamma":0.25, "precision":1E-3}
 
 # Monte Carlo integration params
 N_steps = 25000
 N_walkers = 250
-N_skip = 1000
+N_skip = 2500
 L_start = 5
 
 # Results saving params
@@ -44,11 +44,11 @@ while not optimizer.converged:
 	
 	if opt_args["method"] == "scan1D":
 		optimizer.update_alpha()
-		print("E({:0.5f}) = {:0.15f} | var(E) = {:0.15f}".format(*alpha, *data))
+		print("E({:0.7f}) = {:0.15f} | var(E) = {:0.15f}".format(*alpha, *data))
 
 	if opt_args["method"] == "steepest_descent1D":
 		optimizer.update_alpha(data)
-		print("E({:0.5f}) = {:0.15f} | var(E) = {:0.15f}".format(*alpha, *data))
+		print("E({:0.7f}) = {:0.15f} | var(E) = {:0.15f}".format(*alpha, *data))
 
 
 lib.save(file_name, alpha_list, data_list)

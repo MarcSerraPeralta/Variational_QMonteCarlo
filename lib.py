@@ -254,18 +254,18 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 
 
 def MC_sum(E_local_f, steps, alpha):
-	"""Computes expectation value of energy, E(alpha), given a distribution
-	of steps
+	"""
+	Computes expectation value of energy given a distribution of steps
 
 	Parameters
 	----------
 	E_local_f : function(r, alpha)
 		Local energy function depending on r and alpha
 	steps : np.ndarray(N_steps, N_walkers, dim)
-		Array of points to be used in the computation of the integral.
-		N_steps is the number of steps each walker takes.
-		N_walkers is the number of walkers.
-		dim is the dimension of the integral space.
+		Points to be used in the computation of the integral
+		N_steps is the number of steps each walker takes
+		N_walkers is the number of walkers
+		dim is the dimension of the integral space
 	alpha : np.ndarray
 		Parameters of the trial wave function
 
@@ -299,9 +299,26 @@ class Optimizer:
 	------------------
 	method : str
 		Method for optimizing alpha
-		Options: "scan", "steepest_descent"
+		Options: "scan1D", "steepest_descent1D"
 	init_alpha : np.ndarray
-		Initial values of alpha
+		Initial value of alpha
+	Other arguments for the methods (see below)
+
+	Parameters for 'scan1D'
+	-----------------------
+	step : float
+		Step between alpha
+	final : np.ndarray
+		Final value of alpha
+
+	Parameters for 'steepest_descent1D'
+	-----------------------
+	gamma : float
+		Factor for damping the gradient descent
+	init_step : float
+		Initial step for alpha
+	precision : float
+		Precision for the convergence of alpha
 
 	Functions
 	---------
@@ -349,7 +366,7 @@ class Optimizer:
 
 			# numerical derivative and steepest descent
 			dE_dalpha = (E_current - self.E_old)/(self.alpha - self.alpha_old)
-			alpha_new = steepest_descent(self.alpha, [self.gamma, dE_dalpha])
+			alpha_new = steepest_descent1D(self.alpha, [self.gamma, dE_dalpha])
 
 			if np.abs((alpha_new - self.alpha)/self.alpha) > self.precision:
 				self.alpha_old = self.alpha
@@ -364,7 +381,7 @@ class Optimizer:
 		return
 
 
-def steepest_descent(alpha_old, args):
+def steepest_descent1D(alpha_old, args):
 	"""
 	Returns the new value of alpha using the method of steepest descent.
 
@@ -372,8 +389,9 @@ def steepest_descent(alpha_old, args):
 	----------
 	alpha_new : np.ndarray
 		Old value of alpha
-	args : dict
-		Information about the steepest descent method
+	args : gamma, dE_dalpha
+		gamma (float) is the factor for damping the gradient descent
+		dE_dalpha (float) is the derivative of E(alpha) wrt alpha
 
 	Returns
 	-------
@@ -439,6 +457,8 @@ def save(file_name, alpha_list, data_list, alpha_labels=None, data_labels=["E", 
 
 	return 
 
+
+# [UNUSED BUT MAY STILL BE USEFUL]
 
 #######################################
 #	   PROCESS INPUT PARAMETERS       #
