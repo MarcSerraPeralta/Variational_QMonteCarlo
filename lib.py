@@ -1,7 +1,7 @@
 import multiprocessing
 import numpy as np
 from scipy.optimize import brentq 
-from sympy import simplify, lambdify, conjugate
+import os
 
 
 #######################################
@@ -41,7 +41,7 @@ def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
 
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=dim)
 
-		if (np.random.rand(1) <= prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha)).all():
+		if (np.random.rand(1) <= prob_density(next_point, alpha)/prob_density(steps[i-1], alpha)).all():
 			steps[i] = next_point
 		else:
 			steps[i] = steps[i-1]
@@ -82,7 +82,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=N_walkers*dim).reshape(N_walkers, dim)
 
-		to_change = np.where(np.random.rand(N_walkers) <= prob_density(*next_point.T, *alpha)/prob_density(*steps[i-1].T, *alpha))
+		to_change = np.where(np.random.rand(N_walkers) <= prob_density(next_point, alpha)/prob_density(steps[i-1], alpha))
 
 		steps[i] = steps[i-1]
 		steps[i, to_change] = next_point[to_change]
@@ -141,7 +141,7 @@ def dev_av_rate(trial_move, prob_density, alpha, dim, N_av=100):
 
 	for i in np.arange(1, N_av):
 		next_point = steps[i-1] + np.random.normal(scale=trial_move, size=(dim))
-		ratio = min(prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha),1)
+		ratio = min(prob_density(next_point, alpha)/prob_density(steps[i-1], alpha), 1)
 		if np.random.rand(1) <= ratio:
 			steps[i] = next_point
 		else:
@@ -185,6 +185,49 @@ def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5
 	opt_trial_move = brentq(dev_av_rate, trial_move_init/1000, 10*trial_move_init, args=arguments, maxiter=maxiter, xtol=tol) 
 												
 	return opt_trial_move
+
+
+def MC_integration_core(E_local_f, prob_density, alpha, dim, trial_move, file_name, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
+	"""
+	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers
+	using Monte Carlo integration. 
+
+	Parameters
+	----------
+	E_local_f : function(r, alpha)
+		Local energy function depending on r and alpha
+	prob_density : function(r, alpha)
+		Probability density function depending on position r and parameters alpha
+	alpha : np.ndarray
+		Parameters of the trial wave function
+	N_steps : int
+		Number of steps that the random walker takes
+	N_walkers : int
+		Number of random walkers
+	N_skip : int
+		Number of initial steps to skip for the integration
+	L_start : float
+		Length of the box in which the random walkers are initialized randomly
+	trial_move : float
+		Trial move for the random walkers
+	file_name : str
+		Name of the file to store the E_alpha values for each walker
+
+	Returns
+	-------
+	None
+	"""
+
+	init_points = rand_init_point(L_start, dim, N_walkers)
+	steps = random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
+	steps = steps[N_skip:, :, :]
+	E_alpha_walkers = MC_average_walkers(E_local_f, steps, alpha)
+	f = open(file_name, "w")
+	for E_alpha in E_alpha_walkers:
+		f.write("{:0.35f}\n".format(E_alpha))
+	f.close()
+
+	return 
 
 
 def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, N_cores=-1, trial_move=None):
@@ -233,24 +276,58 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 	N_walkers_last_core = N_walkers - (N_cores-1)*N_walkers_per_core
 	list_N_walkers = np.array([N_walkers_per_core]*(N_cores - 1) + [N_walkers_last_core])
 
+	inputs = [(E_local_f, prob_density, alpha, dim, trial_move, "output_core{}.csv".format(i), N_steps, N, N_skip, L_start) for i, N in enumerate(list_N_walkers)]
+
 	# multiprocessing
 	with multiprocessing.Pool(processes=N_cores) as pool: 
-		inputs = [(prob_density, alpha, N_steps, rand_init_point(L_start, dim, N), trial_move) for N in list_N_walkers]
-		data_outputs = pool.starmap(random_walkers, inputs)
+		data_outputs = pool.starmap(MC_integration_core, inputs)
 
-		total_steps = [np.array(data)[N_skip:, :, :] for data in data_outputs]
+	# load data
+	E_alpha_walkers = []
+	for i in range(N_cores):
+		f = open("output_core{}.csv".format(i), "r")
+		data = f.read()
+		f.close()
+		E_alpha_walkers += [float(E) for E in data.split("\n")[:-1]]
+		os.remove("output_core{}.csv".format(i))
 
-		inputs = [(E_local_f, t_steps, alpha) for t_steps in total_steps]
-		E_output = pool.starmap(MC_sum, inputs)
+	E_alpha_walkers = np.array(E_alpha_walkers)
 
-	# average the differents processes
-	list_E_alpha = np.array([i[0] for i in E_output])
-	list_E_alpha_std = np.array([i[1] for i in E_output])
-
-	E_alpha = sum(list_N_walkers*list_E_alpha)/N_walkers
-	E_alpha_std = np.sqrt(sum(list_N_walkers*list_E_alpha_std**2)/N_walkers)
+	# average and std
+	E_alpha = np.average(E_alpha_walkers)
+	E_alpha_std = np.std(E_alpha_walkers)
 
 	return E_alpha, E_alpha_std 
+
+
+def MC_average_walkers(E_local_f, steps, alpha):
+	"""
+	Computes expectation value of energy given a distribution of steps
+
+	Parameters
+	----------
+	E_local_f : function(r, alpha)
+		Local energy function depending on r and alpha
+	steps : np.ndarray(N_steps, N_walkers, dim)
+		Points to be used in the computation of the integral
+		N_steps is the number of steps each walker takes
+		N_walkers is the number of walkers
+		dim is the dimension of the integral space
+	alpha : np.ndarray(N_parameters)
+		Parameters of the trial wave function
+
+	Returns
+	-------
+	E_alpha : np.ndarray(N_walkers)
+		Expectation value of the energy for given parameters of the trial wave function
+	"""
+
+	N_steps, N_walkers = steps.shape[0], steps.shape[1]
+
+	E_local = E_local_f(steps, alpha) # E_local.shape = N_steps, N_walkers
+	E_alpha_walkers = np.average(E_local, axis=0) # E_alpha_walkers.shape = N_walkers
+
+	return E_alpha_walkers
 
 
 def MC_sum(E_local_f, steps, alpha):
@@ -266,7 +343,7 @@ def MC_sum(E_local_f, steps, alpha):
 		N_steps is the number of steps each walker takes
 		N_walkers is the number of walkers
 		dim is the dimension of the integral space
-	alpha : np.ndarray
+	alpha : np.ndarray(N_parameters)
 		Parameters of the trial wave function
 
 	Returns
@@ -277,10 +354,8 @@ def MC_sum(E_local_f, steps, alpha):
 		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
 	"""
 
-	N_steps, N_walkers = steps.shape[0], steps.shape[1]
-
-	E_local = E_local_f(*steps.T, *alpha) # E_local.shape = N_walkers, N_steps
-	E_alpha_walkers = np.average(E_local, axis=1) # E_alpha_walkers.shape = N_walkers
+	N_walkers = steps.shape[1]
+	E_alpha_walkers = MC_average_walkers(E_local_f, steps, alpha) 
 	E_alpha = np.average(E_alpha_walkers)
 	E_alpha_std = np.std(E_alpha_walkers) / np.sqrt(N_walkers) # standard deviation of an average
 
@@ -456,59 +531,3 @@ def save(file_name, alpha_list, data_list, alpha_labels=None, data_labels=["E", 
 	f.close()
 
 	return 
-
-
-# [UNUSED BUT MAY STILL BE USEFUL]
-
-#######################################
-#	   PROCESS INPUT PARAMETERS       #
-#######################################
-
-def get_E_local_f(H, psi_t, var):
-	"""
-	Returns the function local energy given a Hamiltonian an trial wave function.
-
-	Parameters
-	----------
-	H : sympy expression
-		Hamiltonian of the system
-	psi_t : sympy expression
-		Trial wavefunction
-	var : sympy symbols
-		Variables for position r and for parameters alpha
-
-	Returns
-	-------
-	E_local_f : function(r, alpha)
-		Local energy function depending on r and alpha
-	"""
-
-	E_local_f = H/psi_t
-	E_local_f = simplify(E_local_f)
-	E_local_f = lambdify(var, E_local_f, modules=['numpy'])
-
-	return E_local_f
-
-
-def get_prob_density(psi_t, var):
-	"""
-	Returns the probability density function for metropolis algorithm given a trial wave function.
-
-	Parameters
-	----------
-	psi_t : sympy expression
-		Trial wavefunction
-	var : sympy symbols
-		Variables for position r and for parameters alpha
-
-	Returns
-	-------
-	prob_density : function(r, alpha)
-		Probability density function for the specified trial wave function
-	"""
-
-	prob_density = conjugate(psi_t)*psi_t
-	prob_density = simplify(prob_density)
-	prob_density = lambdify(var, prob_density, modules=['numpy'])
-
-	return prob_density
