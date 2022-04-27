@@ -151,5 +151,19 @@ Where we can see how the method works correctly reaches a value of $`E(0.9977734
 
 
 ## Week 3
+
+### Bullet list:
+1. Make the parallelization of the processes as complete as posssible (@mserraperalta)
+2. Increase efficiency by calculating optimal trial move every X moves instead of every time (@abermejillo)
+3. Improve generalization of the code by using numpy in all arguments of the functions (@mserraperalta)
+4. Generalize code to multimple variational parameters (@dbedialaunetar)
+5. Obtain results for the Helium atom with 1 and 2 variational parameters (@abermejillo)
+6. Update documentation, README and start sketching the report (@abermejillo, @dbedialaunetar and @mserraperalta)
+6. Extras if possible: Implement calculations for H2 and the first excited of He (@abermejillo and @dbedialaunetar)
+
+
+
+
+
 (due 2 May 2022, 23:59)
 
