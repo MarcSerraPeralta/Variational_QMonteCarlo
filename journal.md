@@ -154,6 +154,7 @@ Where we can see how the method works correctly reaches a value of $`E(0.9977734
 
 ### Bullet list:
 1. Make the parallelization of the processes as complete as posssible (@mserraperalta)
+1. Monitor the acceptance ratio
 2. Increase efficiency by calculating optimal trial move every X moves instead of every time (@abermejillo)
 3. Improve generalization of the code by using numpy in all arguments of the functions (@mserraperalta)
 4. Generalize code to multimple variational parameters (@dbedialaunetar)
