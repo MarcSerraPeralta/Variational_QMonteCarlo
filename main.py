@@ -23,6 +23,7 @@ N_steps = 25000
 N_walkers = 250
 N_skip = 2500
 L_start = 5
+N_cores = 4
 
 # Results saving params
 file_name = "output.csv"
@@ -35,18 +36,17 @@ alpha_list = []
 optimizer = lib.Optimizer(opt_args)
 
 while not optimizer.converged:
-	data = lib.MC_integration(E_local_f, prob_density, optimizer.alpha, dim,
-							N_steps=N_steps, N_walkers=N_walkers, N_skip=N_skip, L_start=L_start)
+	data = lib.MC_integration(E_local_f, prob_density, optimizer.alpha, dim, N_steps=N_steps, N_walkers=N_walkers, N_skip=N_skip, L_start=L_start, N_cores=N_cores)
 	alpha = optimizer.alpha
 
 	data_list += [data]
 	alpha_list += [alpha]
 	
-	if opt_args["method"] == "scan1D":
+	if opt_args["method"] == "scan1D" and len(alpha) == 1:
 		optimizer.update_alpha()
 		print("E({:0.7f}) = {:0.15f} | var(E) = {:0.15f}".format(*alpha, *data))
 
-	if opt_args["method"] == "steepest_descent1D":
+	if opt_args["method"] == "steepest_descent1D" and len(alpha) == 1:
 		optimizer.update_alpha(data)
 		print("E({:0.7f}) = {:0.15f} | var(E) = {:0.15f}".format(*alpha, *data))
 
