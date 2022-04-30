@@ -164,6 +164,10 @@ The conclusions drawn from this demonstration are the expected. In the first row
 
 This previous choice of the optimal trial move is performed before any computation along the project, so it is ensured that the acceptance ratio is correctly balanced.
 
+In addition we can check how this holds for a set of walkers. In particular we sample the density of probability of the hydrogen atom with 10,000 walkers, and 10,000 steps each and check the acceptance ratio for each of them. We can observe in the following figure how the acceptance ratio is indeed approximately 0.5.
+
+![alt text](results/W2_acceptance_ratio_H.png)
+
 (due 25 April 2022, 23:59)
 
 
