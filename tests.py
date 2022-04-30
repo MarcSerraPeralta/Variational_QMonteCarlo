@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import lib as lib
-import seaborn as sns
+import inputs as inputs
 
 
 def check_random_walker_1D(tm_sigma, prob_density=None, alpha=None, N_steps=50000):
@@ -32,30 +33,27 @@ def check_random_walker_1D(tm_sigma, prob_density=None, alpha=None, N_steps=5000
 
 	x_points, acceptance_probability, acceptance_ratio = lib.random_walker(prob_density, alpha, N_steps, np.zeros(1), tm_sigma)
 
-	#plt.hist(x_points, bins=40, density=True)
+	plt.hist(x_points, bins=40, density=True)
 	xmin, xmax = np.min(x_points), np.max(x_points)
 	x = np.linspace(xmin, xmax, 1000)
-	# plt.plot(x, prob_density(x, alpha), "--")
-	# plt.xlim(xmin, xmax)
-	# plt.xlabel("r")
-	# plt.ylabel("Probability density function")
-	# plt.tight_layout()
-	# plt.show()
+	plt.plot(x, prob_density(x, alpha), "--")
+	plt.xlim(xmin, xmax)
+	plt.xlabel("r")
+	plt.ylabel("Probability density function")
+	plt.tight_layout()
+	plt.show()
 
 	blabla = np.linspace(1, N_steps, N_steps)
-	#print(x.shape, acceptance_probability.shape)
-	# plt.scatter(blabla,acceptance_probability, s=1)
-	# plt.plot(blabla,acceptance_ratio*np.ones(N_steps),'r')
-	# plt.ylim(0, 1)
-	# plt.xlabel("step")
-	# plt.ylabel("Acceptance probability")
-	# plt.tight_layout()
-	# plt.show()
+	print(x.shape, acceptance_probability.shape)
+	plt.scatter(blabla,acceptance_probability, s=1)
+	plt.plot(blabla,acceptance_ratio*np.ones(N_steps),'r')
+	plt.ylim(0, 1)
+	plt.xlabel("step")
+	plt.ylabel("Acceptance probability")
+	plt.tight_layout()
+	plt.show()
 
-	#data = np.array([x,acceptance_probability])
-
-	#plt.hist(acceptance_probability,bins=100, density = True)
-	#plt.show()
+	
 	graph=sns.jointplot(x=blabla, y=acceptance_probability, s=1,hue_norm=(0,1))
 	graph.ax_joint.axhline(y=acceptance_ratio,c='r')
 	plt.show()
@@ -143,6 +141,18 @@ def check_random_walkers_1D(tm_sigma, prob_density=None, alpha=None, N_steps=500
 
 	return
 
+def monitor_ar_hydrogen(tm_sigma, N_walkers=10000, N_steps=10000):
+	L_start = 5
+	dim = 3
+	alpha = np.array([1])
+	prob_density = inputs.prob_density_Hydrogen_atom
+	init_points = lib.rand_init_point(L_start, dim, N_walkers)
+	_, _, acceptance_ratio = lib.random_walkers(prob_density, alpha, N_steps, init_points, tm_sigma)
+	plt.hist(acceptance_ratio, bins=40, density=True)
+	plt.xlabel("acceptance ratio")
+	plt.ylabel("density of walkers")
+	plt.show()
+	return 
 
 def Gaussian(x, std):
 	"""
@@ -160,6 +170,12 @@ def Gaussian(x, std):
 
 
 if __name__ == '__main__':
+	print("CHECK acceptance ratio Hydrogen (tm_sigma=opt)...")
+	opt_sigma = lib.find_optimal_trial_move(inputs.prob_density_Hydrogen_atom,np.array([1]),3,2)
+	print("The optimal trial move is: ", opt_sigma)
+	monitor_ar_hydrogen(opt_sigma)
+	print("DONE")
+
 	print("CHECK GAUSSIAN 1D (tm_sigma=opt)...")
 	opt_sigma = lib.find_optimal_trial_move(Gaussian,np.array([1]),1,1)
 	print("The optimal trial move is: ", opt_sigma)
