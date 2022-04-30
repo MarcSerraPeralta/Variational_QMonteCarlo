@@ -147,6 +147,23 @@ E(0.9977734) = -0.499996372657338 | var(E) = 0.000004331229248
 
 Where we can see how the method works correctly reaches a value of $`E(0.9977734) = -0.499996 \pm 0.000004 `$ where the exact value is $`\alpha=1`$ and E(1)=-0.5.
 
+In addition to these computations we also need to monitor the acceptance ratio, which is a powerful tool to know that we are sampling correctly. The following images show, with the example function $`f(x)=x^2e^{-x^2}`$, how the acceptance probabilities and the acceptance ratio change. We can see for a walker of 50,000 steps, the acceptance probabilities represented as blue dots and with a red line the acceptance ratio.
+$`\sigma_{tm,opt}\simeq 2`$ sampling             |  $`\sigma_{tm,opt}\simeq 2`$ acceptance probabilities    
+:-------------------------:|:-------------------------:
+![alt text](results/W2_walker_sopt.png) |  ![alt text](results/W2_acceptance_sopt.png)
+
+$`\sigma_{tm}=1`$ sampling             |  $`\sigma_{tm}=1`$ acceptance probabilities    
+:-------------------------:|:-------------------------:
+![alt text](results/W2_walker_s1.png) |  ![alt text](results/W2_acceptance_s1.png)
+
+$`\sigma_{tm}=0.01`$ sampling             |  $`\sigma_{tm}=0.01`$ acceptance probabilities    
+:-------------------------:|:-------------------------:
+![alt text](results/W2_walker_s01.png) |  ![alt text](results/W2_acceptance_s01.png)
+
+The conclusions drawn from this demonstration are the expected. In the first row we see how the implemented code to find a balanced acceptance ratio (see find_optimal_trial_move in [lib.py](https://gitlab.kwant-project.org/computational_physics/projects/Project2-QMC_abermejillo_dbedialaunetar_mserraperalta/-/blob/master/lib.py)) works perfectly. The algorithm found a trial move standard deviation of $`\simeq 2`$, and we see how the acceptance ratio is approximately 0.5, and the function is sampled correctly. On the other hand, for other trial moves (we chose 1 and 0.01) the acceptance ratio deviates from 0.5 and this has a negative effect on the sampling of the function. 
+
+This previous choice of the optimal trial move is performed before any computation along the project, so it is ensured that the acceptance ratio is correctly balanced.
+
 (due 25 April 2022, 23:59)
 
 
@@ -154,7 +171,7 @@ Where we can see how the method works correctly reaches a value of $`E(0.9977734
 
 ### Bullet list:
 1. Make the parallelization of the processes as complete as posssible (@mserraperalta)
-1. Monitor the acceptance ratio
+1. Monitor the acceptance ratio (@abermejillo)
 2. Increase efficiency by calculating optimal trial move every X moves instead of every time (@abermejillo)
 3. Improve generalization of the code by using numpy in all arguments of the functions (@mserraperalta)
 4. Generalize code to multimple variational parameters (@dbedialaunetar)
