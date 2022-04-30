@@ -36,17 +36,21 @@ def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
 	dim = init_point.shape[0]
 	steps = np.zeros((N_steps,dim))
 	steps[0] = init_point
-
+	acceptance_ratio = 0
+	acceptance_probability = np.zeros(N_steps)
 	for i in np.arange(1, N_steps):
 
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=dim)
+		step_acceptance = prob_density(next_point, alpha)/prob_density(steps[i-1], alpha)
+		acceptance_probability[i] = step_acceptance
 
-		if (np.random.rand(1) <= prob_density(next_point, alpha)/prob_density(steps[i-1], alpha)).all():
+		if (np.random.rand(1) <= step_acceptance).all():
 			steps[i] = next_point
+			acceptance_ratio += 1/N_steps
 		else:
 			steps[i] = steps[i-1]
 	
-	return steps
+	return steps, acceptance_probability, acceptance_ratio
 
 
 def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
@@ -80,19 +84,21 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 	steps = np.zeros((N_steps, N_walkers, dim))
 	steps[0] = init_points
 	acceptance_ratio = 0
-
+	acceptance_probability = np.zeros(N_steps)
 	for i in np.arange(1, N_steps):
 
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=N_walkers*dim).reshape(N_walkers, dim)
 
-		to_change = np.where(np.random.rand(N_walkers) <= prob_density(next_point, alpha)/prob_density(steps[i-1], alpha))
+		step_acceptance = prob_density(next_point, alpha)/prob_density(steps[i-1], alpha)
+		acceptance_probability[i] = step_acceptance
+		to_change = np.where(np.random.rand(N_walkers) <= step_acceptance)
 
 		steps[i] = steps[i-1]
 		steps[i, to_change] = next_point[to_change]
 
 		acceptance_ratio += len(to_change[0])/(N_walkers*N_steps)
 
-	return steps, acceptance_ratio
+	return steps, acceptance_probability, acceptance_ratio
 
 
 def rand_init_point(system_size, dim, N_points):

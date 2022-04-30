@@ -29,7 +29,7 @@ def check_random_walker_1D(tm_sigma, prob_density=None, alpha=None, N_steps=5000
 	if prob_density is None: prob_density = Gaussian
 	if alpha is None: alpha = np.array([1])
 
-	x_points = lib.random_walker(prob_density, alpha, N_steps, np.zeros(1), tm_sigma)
+	x_points, acceptance_probability, acceptance_ratio = lib.random_walker(prob_density, alpha, N_steps, np.zeros(1), tm_sigma)
 
 	plt.hist(x_points, bins=40, density=True)
 	xmin, xmax = np.min(x_points), np.max(x_points)
@@ -41,6 +41,15 @@ def check_random_walker_1D(tm_sigma, prob_density=None, alpha=None, N_steps=5000
 	plt.tight_layout()
 	plt.show()
 
+	x = np.linspace(1, N_steps, N_steps)
+	print(x.shape, acceptance_probability.shape)
+	plt.scatter(x,acceptance_probability, s=1)
+	plt.plot(x,acceptance_ratio*np.ones(N_steps),'r')
+	plt.ylim(0, 2)
+	plt.xlabel("step")
+	plt.ylabel("Acceptance probability")
+	plt.tight_layout()
+	plt.show()
 	return
 
 
@@ -142,6 +151,18 @@ def Gaussian(x, std):
 
 
 if __name__ == '__main__':
+	print("CHECK GAUSSIAN 1D (tm_sigma=opt)...")
+	opt_sigma = lib.find_optimal_trial_move(Gaussian,np.array([1]),1,1)
+	print("The optimal trial move is: ", opt_sigma)
+	check_random_walker_1D(opt_sigma)
+	print("DONE")
+
+	print("CHECK X^2*GAUSSIAN 1D (tm_sigma=opt)...")
+	f = lambda x, std: std*x**2*Gaussian(x, std)
+	opt_sigma = lib.find_optimal_trial_move(f,np.array([1]),1,1)
+	print("The optimal trial move is: ", opt_sigma)
+	check_random_walker_1D(opt_sigma, prob_density=f)
+	print("DONE")
 
 	print("CHECK GAUSSIAN 1D (tm_sigma=1)...")
 	check_random_walker_1D(1)
