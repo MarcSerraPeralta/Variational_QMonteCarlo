@@ -160,7 +160,7 @@ $`\sigma_{tm}=0.01`$ sampling             |  $`\sigma_{tm}=0.01`$ acceptance pro
 :-------------------------:|:-------------------------:
 ![alt text](results/W2_walker_s01.png) |  ![alt text](results/W2_acceptance_s01.png)
 
-The conclusions drawn from this demonstration are the expected. In the first row we see how the implemented code to find a balanced acceptance ratio works perfectly. The algorithm found a trial move standard deviation of $`\simeq 2`$, and we see how the acceptance ratio is approximately 0.5, and the function is sampled correctly. On the other hand, for other trial moves (we chose 1 and 0.01) the acceptance ratio deviates from 0.5 and this has a negative effect on the sampling of the function. 
+The conclusions drawn from this demonstration are the expected. In the first row we see how the implemented code to find a balanced acceptance ratio (see find_optimal_trial_move in [lib.py](https://gitlab.kwant-project.org/computational_physics/projects/Project2-QMC_abermejillo_dbedialaunetar_mserraperalta/-/blob/master/lib.py)) works perfectly. The algorithm found a trial move standard deviation of $`\simeq 2`$, and we see how the acceptance ratio is approximately 0.5, and the function is sampled correctly. On the other hand, for other trial moves (we chose 1 and 0.01) the acceptance ratio deviates from 0.5 and this has a negative effect on the sampling of the function. 
 
 This previous choice of the optimal trial move is performed before any computation along the project, so it is ensured that the acceptance ratio is correctly balanced.
 
