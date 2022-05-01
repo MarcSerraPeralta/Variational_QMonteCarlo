@@ -129,9 +129,9 @@ def rand_init_point(system_size, dim, N_points):
 	return init_point
 
 
-def dev_av_rate(trial_move, prob_density, alpha, dim, N_av=100):
+def dev_acceptance_ratio(trial_move, prob_density, alpha, dim, N_av=100):
 	"""
-	Returns the deviation of the average acceptance ratio for a random walker giving N_av steps from 0.5
+	Returns the deviation of the acceptance ratio for a random walker giving N_av steps from 0.5
 
 	Parameters
 	----------
@@ -148,31 +148,31 @@ def dev_av_rate(trial_move, prob_density, alpha, dim, N_av=100):
 
 	Returns
 	-------
-	dev_av_ratio : float
+	dev_acceptance_ratio : float
 		Average acceptance ratio for a random walker giving N_av steps
 	"""
 
-	av_ratio = 0
+	acceptance_ratio = 0
 	steps = np.zeros((N_av, dim))
 	steps[0] = np.zeros(dim)
 
 	for i in np.arange(1, N_av):
 		next_point = steps[i-1] + np.random.normal(scale=trial_move, size=(dim))
-		ratio = min(prob_density(next_point, alpha)/prob_density(steps[i-1], alpha), 1)
+		ratio = min(prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha),1)
 		if np.random.rand(1) <= ratio:
 			steps[i] = next_point
 		else:
 			steps[i] = steps[i-1]
-		av_ratio += ratio
+		acceptance_ratio += ratio
 
-	dev_av_ratio = av_ratio/N_av - 0.5
+	dev_ratio = acceptance_ratio/N_av - 0.5
 
-	return dev_av_ratio
+	return dev_ratio
 
 
 def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5000, N_av=2000, tol=0.05):
 	"""
-	Returns trial_move such that the corresponding average accepting ratio is 0.5+-tol. 
+	Returns trial_move such that the corresponding acceptance ratio is 0.5+-tol. 
 
 	Parameters
 	----------
@@ -187,19 +187,19 @@ def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5
 	maxiter : int
 		Maximum number of iterations 
 	tol : float
-		Tolerance for the deviation of the average acceptance ratio from 0.5
+		Tolerance for the deviation of the acceptance ratio from 0.5
 
 	Returns
 	-------
 	opt_trial_move: float
-		trial_move such that the corresponding average accepting ratio is 0.5 +- tol
+		trial_move such that the corresponding acceptance ratio is 0.5 +- tol
 	"""
 
 	arguments = (prob_density, alpha, dim, N_av)
 
 	# Find a zero in dev_av_rate between 10*trial_move_init and trial_move_init/100,
 	# the function must be of oposite signs at the two points
-	opt_trial_move = brentq(dev_av_rate, trial_move_init/1000, 10*trial_move_init, args=arguments, maxiter=maxiter, xtol=tol) 
+	opt_trial_move = brentq(dev_acceptance_ratio, trial_move_init/1000, 10*trial_move_init, args=arguments, maxiter=maxiter, xtol=tol) 
 												
 	return opt_trial_move
 
