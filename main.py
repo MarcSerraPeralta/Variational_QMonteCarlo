@@ -25,6 +25,7 @@ prob_density = prob_density_Helium_atom_GS_1param
 dim = 6
 opt_args = {"method":"steepest_descent1D", "init_alpha":np.array([0.15]), "init_step":0.01, "gamma":0.03, "precision":1E-5}
 opt_args = {"method":"scan1D", "init_alpha":np.array([0.05]), "step":0.025, "final":np.array([0.25])}
+
 # Monte Carlo integration params
 N_steps = 30000
 N_walkers = 400
@@ -46,7 +47,7 @@ while not optimizer.converged:
 	data = lib.MC_integration(E_local_f, prob_density, optimizer.alpha, dim,
 							N_steps=N_steps, N_walkers=N_walkers, N_skip=N_skip, L_start=L_start, trial_move=trial_move)
 
-	if abs(data[2]-0.5)>=0.05: #if acceptance ratio deviates from 0.5 we change the trial move
+	if abs(data[2] - 0.5) >= 0.05: #if acceptance ratio deviates from 0.5 by 0.05 we change the trial move
 		trial_move = None
 		print("The trial move will be actualized")
 	else:

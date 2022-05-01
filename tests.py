@@ -43,10 +43,10 @@ def check_random_walker_1D(tm_sigma, prob_density=None, alpha=None, N_steps=5000
 	plt.tight_layout()
 	plt.show()
 
-	blabla = np.linspace(1, N_steps, N_steps)
+	x1 = np.linspace(1, N_steps, N_steps)
 	print(x.shape, acceptance_probability.shape)
-	plt.scatter(blabla,acceptance_probability, s=1)
-	plt.plot(blabla,acceptance_ratio*np.ones(N_steps),'r')
+	plt.scatter(x1, acceptance_probability, s=1)
+	plt.plot(x1, acceptance_ratio*np.ones(N_steps), 'r')
 	plt.ylim(0, 1)
 	plt.xlabel("step")
 	plt.ylabel("Acceptance probability")
@@ -54,9 +54,10 @@ def check_random_walker_1D(tm_sigma, prob_density=None, alpha=None, N_steps=5000
 	plt.show()
 
 	
-	graph=sns.jointplot(x=blabla, y=acceptance_probability, s=1,hue_norm=(0,1))
-	graph.ax_joint.axhline(y=acceptance_ratio,c='r')
+	graph=sns.jointplot(x=x1, y=acceptance_probability, s=1, hue_norm=(0,1))
+	graph.ax_joint.axhline(y=acceptance_ratio, c='r')
 	plt.show()
+
 	return
 
 
@@ -141,18 +142,40 @@ def check_random_walkers_1D(tm_sigma, prob_density=None, alpha=None, N_steps=500
 
 	return
 
-def monitor_ar_hydrogen(tm_sigma, N_walkers=10000, N_steps=10000):
+
+def monitor_ar_hydrogen(trial_move, N_walkers=10000, N_steps=10000):
+	"""
+	Plots a histogram of the acceptance ratio for hydrogen for all the random walkers.
+
+	Parameters
+	----------
+	trial_move : float
+		Standard deviation that defines the trial move according to a normal distribution
+	N_walkers : int
+		Number of random walkers
+	N_steps : int
+		Number of steps that each random walker takes
+
+	Returns
+	-------
+	None
+	"""
+
 	L_start = 5
 	dim = 3
 	alpha = np.array([1])
+
 	prob_density = inputs.prob_density_Hydrogen_atom
 	init_points = lib.rand_init_point(L_start, dim, N_walkers)
-	_, _, acceptance_ratio = lib.random_walkers(prob_density, alpha, N_steps, init_points, tm_sigma)
+
+	_, _, acceptance_ratio = lib.random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
 	plt.hist(acceptance_ratio, bins=40, density=True)
 	plt.xlabel("acceptance ratio")
 	plt.ylabel("density of walkers")
 	plt.show()
+
 	return 
+
 
 def Gaussian(x, std):
 	"""
@@ -165,8 +188,16 @@ def Gaussian(x, std):
 		Variable of the Gaussian distribution
 	std : float
 		Standard deviation of the aussian distribution
+
+	Returns
+	-------
+	f : float
+		Probability of x in a 1D Gaussian distribution N(0, std)
 	"""
-	return np.exp(-x**2/(2*std**2))/(std*np.sqrt(2*np.pi))
+
+	f = np.exp(-x**2/(2*std**2))/(std*np.sqrt(2*np.pi))
+
+	return f
 
 
 if __name__ == '__main__':
