@@ -31,6 +31,10 @@ def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
 	-------
 	steps : np.ndarray(N_steps, dim)
 		Steps of the random walker
+	acceptance_probability: np.ndarray(N_steps)
+		Acceptance probability of a walker at each point
+	acceptance_ratio : float
+		Acceptance ratio of the random walker
 	"""
 
 	dim = init_point.shape[0]
@@ -76,7 +80,9 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 	-------
 	steps : np.ndarray(N_steps, N_walkers, dim)
 		Steps of the random walker
-	acceptance_ratio : float
+	acceptance_probability: np.ndarray(N_steps)
+		Acceptance probability of a walker at each point
+	acceptance_ratio : np.ndarray(N_walkers)
 		Acceptance ratio of the random walkers
 	"""
 
@@ -89,7 +95,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=N_walkers*dim).reshape(N_walkers, dim)
 
-		step_acceptance = prob_density(next_point, alpha)/prob_density(steps[i-1], alpha)
+		step_acceptance = np.minimum(prob_density(next_point, alpha)/prob_density(steps[i-1], alpha),1)
 		acceptance_probability[i] = step_acceptance[0]
 		to_change = np.where(np.random.rand(N_walkers) <= step_acceptance)
 
@@ -230,11 +236,11 @@ def MC_integration_core(E_local_f, prob_density, alpha, dim, trial_move, file_na
 	"""
 
 	init_points = rand_init_point(L_start, dim, N_walkers)
-	steps, acceptance_ratio = random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
+	steps, _, acceptance_ratio = random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
 	steps = steps[N_skip:, :, :]
 	E_alpha_walkers = MC_average_walkers(E_local_f, steps, alpha)
 	f = open(file_name, "w")
-	f.write("{:0.35f}\n".format(acceptance_ratio))
+	f.write("{:0.35f}\n".format(np.mean(acceptance_ratio)))
 	for E_alpha in E_alpha_walkers:
 		f.write("{:0.35f}\n".format(E_alpha))
 	f.close()
@@ -315,7 +321,7 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 	E_alpha_std = np.std(E_alpha_walkers)
 	acceptance_ratio = np.average(acceptance_ratio)
 
-	return E_alpha, E_alpha_std, acceptance_ratio
+	return E_alpha, E_alpha_std, acceptance_ratio, trial_move
 
 
 def MC_average_walkers(E_local_f, steps, alpha):
@@ -503,7 +509,7 @@ def steepest_descent1D(alpha_old, args):
 #			  SAVE RESULTS
 #######################################
 
-def save(file_name, alpha_list, data_list, alpha_labels=None, data_labels=["E", "var(E)", "acceptance_ratio"]):
+def save(file_name, alpha_list, data_list, alpha_labels=None, data_labels=["E", "var(E)", "acceptance_ratio", "trial_move"]):
 	"""
 	Saves alpha and data results to file_name.
 
