@@ -158,7 +158,7 @@ def dev_acceptance_ratio(trial_move, prob_density, alpha, dim, N_av=100):
 
 	for i in np.arange(1, N_av):
 		next_point = steps[i-1] + np.random.normal(scale=trial_move, size=(dim))
-		ratio = min(prob_density(*next_point, *alpha)/prob_density(*steps[i-1], *alpha),1)
+		ratio = min(prob_density(next_point, alpha)/prob_density(steps[i-1], alpha),1)
 		if np.random.rand(1) <= ratio:
 			steps[i] = next_point
 		else:
