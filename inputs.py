@@ -168,7 +168,7 @@ def prob_density_Hydrogen_atom(r, alpha):
 #--      Ground State       --#
 #------------------------------
 
-def WF_Helium_atom_GS(r, alpha):
+def WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha):
 	"""
 	Returns the value of the wave function for the Helium atom
 	ground state at the specified positions r and parameters alpha.
@@ -186,10 +186,10 @@ def WF_Helium_atom_GS(r, alpha):
 		Wave function at the specified position and alpha
 	"""
 
-	r1 = np.sqrt(r[0]**2 + r[1]**2 + r[2]**2)
-	r2 = np.sqrt(r[3]**2 + r[4]**2 + r[5]**2)
-	r12 = np.sqrt((r[0]-r[3])**2 + (r[1]-r[4])**2 + (r[2]-r[5])**2)
-	psi = np.exp(-alpha[0]*(r1+r2))*np.exp(r12/(2*(1+alpha[1]*r12)))
+	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
+	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
+	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	psi = np.exp(-z*(r1+r2))*np.exp(r12/(2*(1+alpha*r12)))
 
 	return psi
 
@@ -225,7 +225,7 @@ def E_local_Helium_atom_GS(r, alpha, h=0.001):
 	d2x2 = (WF_Helium_atom_GS(x1, y1, z1, x2+h, y2, z2, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1, y1, z1, x2-h, y2, z2, z, alpha))/h**2
 	d2y2 = (WF_Helium_atom_GS(x1, y1, z1, x2, y2+h, z2, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1, y1, z1, x2, y2-h, z2, z, alpha))/h**2
 	d2z2 = (WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2+h, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2-h, z, alpha))/h**2
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2).T / WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha) # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2).T / WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha).T # E_kin = N_steps, N_walkers
 
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)

@@ -94,7 +94,6 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 	for i in np.arange(1, N_steps):
 
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=N_walkers*dim).reshape(N_walkers, dim)
-
 		step_acceptance = np.minimum(prob_density(next_point, alpha)/prob_density(steps[i-1], alpha),1)
 		acceptance_probability[i] = step_acceptance[0]
 		to_change = np.where(np.random.rand(N_walkers) <= step_acceptance)
@@ -444,6 +443,14 @@ class Optimizer:
 			self.alpha_old = None
 			self.E_old = None
 
+		elif self.method == "steepest_descent_ANY_D":
+			self.gamma = opt_args["gamma"] 
+			self.step = opt_args["init_step"]
+			self.dim_alpha = np.shape(self.alpha)[0]
+			self.precision = opt_args["precision"]
+			self.alpha_old = None
+			self.E_old = None
+
 		return
 
 	def update_alpha(self, args=None):
@@ -474,6 +481,28 @@ class Optimizer:
 			else:
 				self.converged = True
 
+		elif self.method == "steepest_descent_ANY_D":
+			E_current = args
+
+			# first iteration (cannot calculate the numerical gradient)
+			if self.alpha_old is None:
+				self.alpha_old = self.alpha
+				self.alpha = self.alpha + self.step
+				self.E_old = E_current
+				return 
+
+			# numerical derivative and steepest descent
+			dE_dalpha = (E_current - self.E_old)/self.step
+			alpha_new = steepest_descent_ANY_D(self.alpha, [self.gamma, dE_dalpha])
+
+			if np.max(np.abs((alpha_new - self.alpha)/self.alpha)) > self.precision:
+				self.alpha_old = self.alpha
+				self.E_old = E_current
+				self.alpha = alpha_new
+				self.step = self.alpha - self.alpha_old
+			else:
+				self.converged = True
+
 		else: 
 			self.converged = True
 		
@@ -481,6 +510,30 @@ class Optimizer:
 
 
 def steepest_descent1D(alpha_old, args):
+	"""
+	Returns the new value of alpha using the method of steepest descent.
+
+	Parameters
+	----------
+	alpha_new : np.ndarray
+		Old value of alpha
+	args : gamma, dE_dalpha
+		gamma (float) is the factor for damping the gradient descent
+		dE_dalpha (float) is the derivative of E(alpha) wrt alpha
+
+	Returns
+	-------
+	alpha_new : np.ndarray
+		New value of alpha
+	"""
+
+	gamma, dE_dalpha = args
+
+	alpha_new = alpha_old - gamma*dE_dalpha
+
+	return alpha_new
+
+def steepest_descent_ANY_D(alpha_old, args):
 	"""
 	Returns the new value of alpha using the method of steepest descent.
 
