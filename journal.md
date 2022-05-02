@@ -183,6 +183,32 @@ In addition we can check how this holds for a set of walkers. In particular we s
 6. Update documentation, README and start sketching the report (@abermejillo, @dbedialaunetar and @mserraperalta)
 6. Extras if possible: Implement calculations for H2 and the first excited of He (@abermejillo and @dbedialaunetar)
 
+### Progress:
+
+1. @mserraperalta improved the parallelization process in MC_integration: [commit](5c9ae181f147f3378db6212a17c98f4e66993096)
+2. @abermejillo monitored the acceptance ratio:[commit](35d2081263b476b942dc4a8b63b3895238083236)
+3. @abermejillo increased efficiency by reducing the amount of times $`\sigma_{tm,opt}`$ is computed [commit](249c319f57f91326f4096ba279c3367cba361059)
+4. @mserraperalta generalized the arguments of some functions: [commit](5c9ae181f147f3378db6212a17c98f4e66993096)
+5. @dbedialaunetar generalized the minimization problem to multiple variational parameters: [commit](2bad34dc170d133ddd173695f9cca80439e705bc)
+6. @abermejillo obtained results for the Helium atom with a 2 parameter wavefunction
+7. @abermejillo included inputs for the 2 first excited levels of Helium: [commit](5d16f290a4f0e9e2c03e7a7ec06c42ee605ec07f)
+
+**Results and comments**
+
+Due to 1 and 3 the efficiency should have increased. Comment on in and include results at the end of timing.ipynb. Something about the other parallelization library?
+
+Acceptance ratio monitoring results were added in week 2.
+
+Report problems with the minimization? The thing proposed by jos was not implementable? Still it works with some manual supervision and iterative process.
+
+The best result obtained for the upper bound of the ground state energy of He is $`E(1.8431,0.35129)=-2.891\pm 0.007`$. It is a satisfactory result compared to the ones in Jos's book. But the standar deviation of the Energy is higher than usually reported in CMC computations of Helium. 
+
+To check that the minimization of the energy for multiple parameters work we minimized the energy of the Harmonic Oscillator for a wavefunction of the following shape.
+
+$`\Psi(x)=e^{-\alpha x^2-\beta x}`$.
+
+We know that the exact solution is given for $`\alpha=0.5`$ and $`\beta=0`$. The numerical computation resulted in $`\alpha=0.566`$ and $`\beta=-0.021`$ with an energy of $`E(0.566,-0.021)=0.504\pm 0.001`$.
+
 
 
 
