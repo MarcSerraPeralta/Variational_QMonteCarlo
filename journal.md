@@ -195,23 +195,35 @@ In addition we can check how this holds for a set of walkers. In particular we s
 
 **Results and comments**
 
-Due to 1 and 3 the efficiency should have increased. Comment on in and include results at the end of timing.ipynb. Something about the other parallelization library?
+First, the results for the monitoring of the acceptance ration were added at the end of Week 2.
 
-Acceptance ratio monitoring results were added in week 2.
+In last week's journal progress, we reported a slight speed-up in computation time thanks to the parallelization of the sampling of different walkers. However, the parallelization was not complete. We first obtained the samples of the various walkers in parallel, but we then joined all the results using only one core (the leading one), in order to then separate the task of computing the energy of the samples into different cores again. This week, the whole process, from taking the samples to calculating the energy, is parallelized, without joining the results in the middle. The results for $`N_{steps} = 25000`$ are the following
 
-Report problems with the minimization? The thing proposed by jos was not implementable? Still it works with some manual supervision and iterative process.
+BEFORE | Number of walkers           | time[s] (1 core) | time[s] (4 cores) | NOW | time[s] (1 core) | time[s] (4 cores) | time[s] (8 cores)
+:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
+ _ | 250| 1.75 | 2.07 | _ | 2.34 | 2.22 | 2.8.
+ _ | 1000|3.76|3.02 | _ | 4.12 | 2.91 | 3.16
+ _ | 4000|9.75|6.38 | _ | 9.94 | 5.17 | 4.52
 
-The best result obtained for the upper bound of the ground state energy of He is $`E(1.8431,0.35129)=-2.891\pm 0.007`$. It is a satisfactory result compared to the ones in Jos's book. But the standar deviation of the Energy is higher than usually reported in CMC computations of Helium. 
+The results before and after completely parallelizing the process are quite similar, and for high number of walkers the code seems to be more efficient with 4 cores. The improvement gained has been of 19% in the best of cases (with the exception of the 30% increase with 8 cores and 4000 walkers) but we also lost efficiency in some others. The library that we use for parallelization is `multiprocessing`, and although it can be benefitial in some cases, other libraries, such as `ray`, work much better in other situations. This could be something to explore for the final report.
 
-To check that the minimization of the energy for multiple parameters work we minimized the energy of the Harmonic Oscillator for a wavefunction of the following shape.
+Comparing the timing results before completely parallelizing from last week and this week, we see that this week the times are lower. This results from a combination of two things: increasing efficiency by reducing the amount of times $`\sigma_{tm,opt}`$ is computed, and using another computer.
 
-$`\Psi(x)=e^{-\alpha x^2-\beta x}`$.
+Regarding minimization, since last week we have been using a numerical scheme for the gradient descent method, that is, we calculate the derivative $`\frac{d E}{d \alpha}`$ (which for higher dimensional $`\bm{\alpha}`$ is a vector) numerically. Even though Jos reports another method to calculate this derivative, we believe that Jos' method requires normalizing the wave function, whose norm depends on $`\bm{\alpha}`$, and then taking its gradient with respect to $`\bm{\alpha}`$. Implementing this would require extensive analytical calculations for each trial wave function, which we want to avoid, so we simply calculate $`\frac{dE}{d \alpha}`$ numerically.
 
-We know that the exact solution is given for $`\alpha=0.5`$ and $`\beta=0`$. The numerical computation resulted in $`\alpha=0.566`$ and $`\beta=-0.021`$ with an energy of $`E(0.566,-0.021)=0.504\pm 0.001`$.
+This week, we implemented the hamiltonian and trial wave functions, ground states and excited states, of the Helium atom with two parameters, and also the gradient descent method for any dimension of $`\bm{\alpha}`$. The excited state energies have not yet been calculated. The lowest energy obtained for a ground state trial wave function
 
+$`\Psi_T (\bm{r_1}, \bm{r_2}, z, \alpha)= e^{-2z(r_1+r_2)} e^{r_{12}/(1+\alpha r_{12})}`$
 
+is $`E(z=1.8431,\alpha = 0.35129)=-2.891\pm 0.007`$. It is a satisfactory result compared to the ones in Jos's book, considering the exact result is $`E = -2.9037`$. This result was not obtained in one go, however. Our initial parameters were $`z=2`$ and $`\alpha=0.5`$, with a $`\gamma = 0.2`$, and we let the minimization algorithm run for a number of $`(z, \alpha)`$. Out of these results, we took the parameters that gave the lowest energy as initial parameters, and we let the minimization algorithm run with a lower $`\gamma`$. This process was repeated three times and the result above is the lowest energy obtained.
 
+The reason why the process is not done in one go is that due to the statistical nature of the calculation of $`E(\bm{\alpha})`$, and the use of numerical derivatives, the gradient descent algorithm can get stuck oscillating unpredictably. The solution is to keep decreasing the damping factor $`\gamma`$.
 
+Finally, we support our claim that our gradient descent algorithm works for any dimensional $`\bm{\alpha}`$ by minimizing the energy of the Harmonic Oscillator for a trial wave function of two parameters:
+
+$`\Psi_T(x)=e^{-\alpha x^2-\beta x}`$.
+
+We know that the exact solution is given for $`\alpha=0.5`$ and $`\beta=0`$. The numerical computation resulted in $`\alpha=0.5030`$ and $`\beta=-0.032`$ with an energy of $`E(0.5030,-0.032)=0.5004\pm 0.0003`$.
 
 (due 2 May 2022, 23:59)
 
