@@ -8,6 +8,8 @@ import os
 #	    MONTE CARLO INTEGRATION       #
 #######################################
 
+# ---WALKER GENERATION---
+
 def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
 	"""
 	Returns steps of a random walker that follows a Markov chain given a probability
@@ -93,7 +95,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 	acceptance_probability = np.zeros(N_steps)
 	for i in np.arange(1, N_steps):
 
-		next_point = steps[i-1] + np.random.normal(0, trial_move, size=N_walkers*dim).reshape(N_walkers, dim)
+		next_point = steps[i-1] + np.random.normal(0, trial_move, size=(N_walkers,dim))
 		step_acceptance = np.minimum(prob_density(next_point, alpha)/prob_density(steps[i-1], alpha),1)
 		acceptance_probability[i] = step_acceptance[0]
 		to_change = np.where(np.random.rand(N_walkers) <= step_acceptance)
@@ -105,6 +107,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 
 	return steps, acceptance_probability, acceptance_ratio
 
+#---WALKER INTIALIZATION---
 
 def rand_init_point(system_size, dim, N_points):
 	"""
@@ -202,6 +205,7 @@ def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5
 												
 	return opt_trial_move
 
+#---MONTE CARLO INTEGRATION---
 
 def MC_integration_core(E_local_f, prob_density, alpha, dim, trial_move, file_name, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
 	"""
@@ -317,7 +321,7 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 
 	# average and std
 	E_alpha = np.average(E_alpha_walkers)
-	E_alpha_std = np.std(E_alpha_walkers)
+	E_alpha_std = np.std(E_alpha_walkers) / np.sqrt(N_walkers)
 	acceptance_ratio = np.average(acceptance_ratio)
 
 	return E_alpha, E_alpha_std, acceptance_ratio, trial_move
@@ -345,44 +349,10 @@ def MC_average_walkers(E_local_f, steps, alpha):
 		Expectation value of the energy for given parameters of the trial wave function
 	"""
 
-	N_steps, N_walkers = steps.shape[0], steps.shape[1]
-
 	E_local = E_local_f(steps, alpha) # E_local.shape = N_steps, N_walkers
 	E_alpha_walkers = np.average(E_local, axis=0) # E_alpha_walkers.shape = N_walkers
 
 	return E_alpha_walkers
-
-
-def MC_sum(E_local_f, steps, alpha):
-	"""
-	Computes expectation value of energy given a distribution of steps
-
-	Parameters
-	----------
-	E_local_f : function(r, alpha)
-		Local energy function depending on r and alpha
-	steps : np.ndarray(N_steps, N_walkers, dim)
-		Points to be used in the computation of the integral
-		N_steps is the number of steps each walker takes
-		N_walkers is the number of walkers
-		dim is the dimension of the integral space
-	alpha : np.ndarray(N_parameters)
-		Parameters of the trial wave function
-
-	Returns
-	-------
-	E_alpha : float
-		Expectation value of the energy for given parameters of the trial wave function
-	E_alpha_std : float
-		Standard deviation of E_alpha computed from E_alpha_walkers (E_alpha for each walker)
-	"""
-
-	N_walkers = steps.shape[1]
-	E_alpha_walkers = MC_average_walkers(E_local_f, steps, alpha) 
-	E_alpha = np.average(E_alpha_walkers)
-	E_alpha_std = np.std(E_alpha_walkers) / np.sqrt(N_walkers) # standard deviation of an average
-
-	return E_alpha, E_alpha_std
 
 
 #######################################
@@ -508,6 +478,7 @@ class Optimizer:
 		
 		return
 
+#---VARIATIONAL PARAMETER UPDATE---
 
 def steepest_descent1D(alpha_old, args):
 	"""
