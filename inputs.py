@@ -103,6 +103,59 @@ def prob_density_Harmonic_Oscillator(x, alpha):
 
 	return prob
 
+#######################################
+#     HARMONIC OSCILLATOR 2 PARAM     #
+#######################################
+
+# TRIAL WAVE FUNCTION = e**(-alpha*x**2-beta*x)
+
+def E_local_Harmonic_Oscillator_2param(x, alpha):
+	"""
+	Returns the value of the probability density function for the 1D Harmonic Oscillator
+	at the specified positions x and parameters alpha.
+
+	Parameters
+	----------
+	x : np.ndarray(N_walkers, 1)
+		Position of N_walkers walkers
+	alpha : np.ndarray(N_parameters)
+		Parameters of the trial wave function
+
+	Returns
+	-------
+	prob : np.ndarray(N_walkers)
+		Probability density of the different walkers function at the specified x and alpha
+	"""
+	alpha = alpha[0]
+	beta = alpha[1]
+	x = x.reshape(x.shape[:-1])
+
+	E = -0.5*beta**2 +0.5*x**2 -2*alpha**2*x**2 + alpha*(1-2*beta*x)
+
+	return E
+
+def prob_density_Harmonic_Oscillator_2param(x, alpha):
+	"""
+	Returns the value of the probability density function for the 1D Harmonic Oscillator
+	at the specified positions x and parameters alpha.
+
+	Parameters
+	----------
+	x : np.ndarray(N_walkers, 1)
+		Position of N_walkers walkers
+	alpha : np.ndarray(N_parameters)
+		Parameter of the trial wave function
+
+	Returns
+	-------
+	prob : np.ndarray(N_walkers)
+		Probability density of the different walkers function at the specified x and alpha
+	"""
+	alpha = alpha[0]
+	beta = alpha[1]
+	x = x.reshape(x.shape[:-1])
+
+	return np.exp(-2*(beta*x+alpha*x**2))
 
 ################################
 #        HYDROGEN ATOM         #
@@ -194,7 +247,7 @@ def WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha):
 	return psi
 
 
-def E_local_Helium_atom_GS(r, alpha, h=0.001):
+def E_local_Helium_atom_GS(r, alpha, h=0.000001):
 	"""
 	Returns the value of the local energy for the Helium atom
 	ground state at the specified positions r and parameters alpha.
