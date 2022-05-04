@@ -34,6 +34,8 @@ prob_density = prob_density_Helium_atom_GS
 dim = 6
 opt_args = {"method":"steepest_descent_ANY_D", "init_alpha":np.array([2,0.5]), "init_step":np.array([0.1,-0.1]), "gamma":0.5, "precision":1E-5}
 
+#############################################
+
 # Monte Carlo integration params
 N_steps = 30000
 N_walkers = 400
