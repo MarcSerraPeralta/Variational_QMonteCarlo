@@ -420,11 +420,11 @@ def WF_Helium_atom_1E(x1,y1,z1,x2,y2,z2, alpha):
 
 	psi1s1 = np.exp(-q0*r1)
 	psi1s2 = np.exp(-q0*r2)
-	psi2s1 = (1-q1*r1/2)*np.exp(-z1*r1/2)
-	psi2s2 = (1-q1*r2/2)*np.exp(-z1*r2/2)
-	f = np.exp(r12/(1+alpha*r12))
+	psi2s1 = (1-q1*r1/2)*np.exp(-q1*r1/2)
+	psi2s2 = (1-q1*r2/2)*np.exp(-q1*r2/2)
+	f = np.exp(r12/(4*(1+alpha*r12)))
 
-	psi = (psi1s1*psi2s2-psi2s1*psi1s2)*f
+	psi = (psi1s1*psi2s2 - psi2s1*psi1s2)*f
 
 	return psi
 
@@ -526,9 +526,9 @@ def WF_Helium_atom_2E(x1,y1,z1,x2,y2,z2, alpha):
 	psi1s2 = np.exp(-q0*r2)
 	psi2s1 = (1-q1*r1/2)*np.exp(-q1*r1/2)
 	psi2s2 = (1-q1*r2/2)*np.exp(-q1*r2/2)
-	f = np.exp(r12/(1+alpha*r12))
+	f = np.exp(r12/(2*(1+alpha*r12)))
 
-	psi = (psi1s1*psi2s2+psi2s1*psi1s2)*f
+	psi = (psi1s1*psi2s2 + psi2s1*psi1s2)*f
 
 	return psi
 
@@ -564,14 +564,14 @@ def E_local_Helium_atom_2E(r, alpha, h=0.001):
 	d2y2 = (WF_Helium_atom_2E(x1, y1, z1, x2, y2+h, z2, alpha)-2*WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_2E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
 	d2z2 = (WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2+h, alpha)-2*WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
 
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2).T / WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
 	
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
 	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
 
-	E_pot = (-2/r1 -2/r2 +1/r12).T # E_kin = N_steps, N_walkers
+	E_pot = (-2/r1 - 2/r2 + 1/r12) # E_kin = N_steps, N_walkers
 
 	return E_kin + E_pot
 
@@ -630,7 +630,7 @@ def WF_Helium_atom_3E(x1,y1,z1,x2,y2,z2, alpha):
 	psi1s2 = np.exp(-q0*r2)
 	psi2p1 = r1*np.exp(-q1*r1/2)*(z1/r1)
 	psi2p2 = r2*np.exp(-q1*r2/2)*(z2/r2)
-	f = np.exp(r12/(1+alpha*r12))
+	f = np.exp(r12/(2*(1+alpha*r12)))
 
 	psi = (psi1s1*psi2p2 + psi2p1*psi1s2)*f
 
@@ -667,14 +667,14 @@ def E_local_Helium_atom_3E(r, alpha, h=0.001):
 	d2x2 = (WF_Helium_atom_3E(x1, y1, z1, x2+h, y2, z2, alpha)-2*WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_3E(x1, y1, z1, x2-h, y2, z2, alpha))/h**2
 	d2y2 = (WF_Helium_atom_3E(x1, y1, z1, x2, y2+h, z2, alpha)-2*WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_3E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
 	d2z2 = (WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2+h, alpha)-2*WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2).T / WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
 
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
 	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
 
-	E_pot = (-2/r1 -2/r2 +1/r12).T # E_kin = N_steps, N_walkers
+	E_pot = (-2/r1 - 2/r2 + 1/r12) # E_kin = N_steps, N_walkers
 
 	return E_kin + E_pot
 
@@ -734,7 +734,7 @@ def WF_Helium_atom_4E(x1,y1,z1,x2,y2,z2, alpha):
 	psi1s2 = np.exp(-q0*r2)
 	psi2p1 = r1*np.exp(-q1*r1/2)*(z1/r1)
 	psi2p2 = r2*np.exp(-q1*r2/2)*(z2/r2)
-	f = np.exp(r12/(1+alpha*r12))
+	f = np.exp(r12/(4*(1+alpha*r12)))
 
 	psi = (psi1s1*psi2p2 - psi2p1*psi1s2)*f
 
@@ -771,14 +771,14 @@ def E_local_Helium_atom_4E(r, alpha, h=0.001):
 	d2x2 = (WF_Helium_atom_4E(x1, y1, z1, x2+h, y2, z2, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2-h, y2, z2, alpha))/h**2
 	d2y2 = (WF_Helium_atom_4E(x1, y1, z1, x2, y2+h, z2, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
 	d2z2 = (WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2+h, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) /WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
 
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
 	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
 
-	E_pot = (-2/r1 -2/r2 +1/r12) # E_kin = N_steps, N_walkers
+	E_pot = (-2/r1 - 2/r2 + 1/r12) # E_kin = N_steps, N_walkers
 
 	return E_kin + E_pot
 

@@ -42,17 +42,17 @@ prob_density = prob_density_Helium_atom_1E
 dim = 6
 opt_args = {"method":"steepest_descent_ANY_D", "init_alpha":np.array([2,2,0.5]), "init_step":np.array([-0.1,-0.1,-0.1]), "gamma":0.5, "precision":1E-5}
 
-# # HELIUM ATOM FIRST EXCITED 3 PARAMETERS
-# E_local_f = E_local_Helium_atom_2E
-# prob_density = prob_density_Helium_atom_2E
-# dim = 6
-# opt_args = {"method":"steepest_descent_ANY_D", "init_alpha":np.array([2,2,0.5]), "init_step":np.array([-0.1,-0.1,-0.1]), "gamma":0.5, "precision":1E-5}
+# HELIUM ATOM FIRST EXCITED 3 PARAMETERS
+E_local_f = E_local_Helium_atom_2E
+prob_density = prob_density_Helium_atom_2E
+dim = 6
+opt_args = {"method":"steepest_descent_ANY_D", "init_alpha":np.array([2,2,0.5]), "init_step":np.array([-0.1,-0.1,-0.1]), "gamma":0.5, "precision":1E-5}
 
-# # HELIUM ATOM FIRST EXCITED 3 PARAMETERS
-# E_local_f = E_local_Helium_atom_3E
-# prob_density = prob_density_Helium_atom_3E
-# dim = 6
-# opt_args = {"method":"steepest_descent_ANY_D", "init_alpha":np.array([2,2,0.5]), "init_step":np.array([-0.1,-0.1,-0.1]), "gamma":0.5, "precision":1E-5}
+# HELIUM ATOM FIRST EXCITED 3 PARAMETERS
+E_local_f = E_local_Helium_atom_3E
+prob_density = prob_density_Helium_atom_3E
+dim = 6
+opt_args = {"method":"steepest_descent_ANY_D", "init_alpha":np.array([2,2,0.5]), "init_step":np.array([-0.1,-0.1,-0.1]), "gamma":0.5, "precision":1E-5}
 
 # # HELIUM ATOM FIRST EXCITED 3 PARAMETERS
 # E_local_f = E_local_Helium_atom_4E
