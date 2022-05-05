@@ -317,7 +317,7 @@ def E_local_Helium_atom_GS_1param_numeric(r, alpha, h=0.001):
 	"""
 	z = 2 # one of the parameters is pre-set
 	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
-	z, alpha = alpha
+	alpha = alpha[0]
 
 	d2x1 = (WF_Helium_atom_GS(x1+h, y1, z1, x2, y2, z2, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1-h, y1, z1, x2, y2, z2, z, alpha))/h**2
 	d2y1 = (WF_Helium_atom_GS(x1, y1+h, z1, x2, y2, z2, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1, y1-h, z1, x2, y2, z2, z, alpha))/h**2
