@@ -14,7 +14,6 @@ def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
 	"""
 	Returns steps of a random walker that follows a Markov chain given a probability
 	density function using the Metropolis algorithm. 
-	'dim' is obtained from init_point. 
 
 	Parameters
 	----------
@@ -44,6 +43,7 @@ def random_walker(prob_density, alpha, N_steps, init_point, trial_move):
 	steps[0] = init_point
 	acceptance_ratio = 0
 	acceptance_probability = np.zeros(N_steps)
+
 	for i in np.arange(1, N_steps):
 
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=dim)
@@ -63,13 +63,12 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 	"""
 	Returns steps of N_walkers random walkers that follows a Markov chain given a probability
 	density function using the Metropolis algorithm. 
-	'N_walkers' and 'dim' are obtained from init_points.
 
 	Parameters
 	----------
 	prob_density : function(r, alpha)
 		Probability density function depending on position r and parameters alpha
-	alpha : np.ndarray
+	alpha : np.ndarray(N_params)
 		Parameters of the trial wave functon
 	N_steps : int
 		Number of steps that each random walker takes
@@ -93,6 +92,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 	steps[0] = init_points
 	acceptance_ratio = np.zeros(N_walkers)
 	acceptance_probability = np.zeros(N_steps)
+
 	for i in np.arange(1, N_steps):
 
 		next_point = steps[i-1] + np.random.normal(0, trial_move, size=(N_walkers,dim))
@@ -107,6 +107,7 @@ def random_walkers(prob_density, alpha, N_steps, init_points, trial_move):
 
 	return steps, acceptance_probability, acceptance_ratio
 
+
 #---WALKER INTIALIZATION---
 
 def rand_init_point(system_size, dim, N_points):
@@ -119,6 +120,8 @@ def rand_init_point(system_size, dim, N_points):
 		Typical size of the system, e.g. for the Hydrogen atom it could be 2*a_0
 	dim : int
 		Dimension of the configuration space, i.e. number of degrees of freedom in the system
+	N_points : int
+		Number of initial points with dimension dim
 
 	Returns
 	-------
@@ -133,25 +136,25 @@ def rand_init_point(system_size, dim, N_points):
 
 def dev_acceptance_ratio(trial_move, prob_density, alpha, dim, N_av=100):
 	"""
-	Returns the deviation of the acceptance ratio for a random walker giving N_av steps from 0.5
+	Returns the deviation of the acceptance ratio from 0.5 for a random walker with given N_av steps 
 
 	Parameters
 	----------
+	trial_move : float
+		Current initial trial move variance
 	prob_density : function(r, alpha)
 		Probability density function depending on position r and parameters alpha
 	alpha : np.ndarray
 		Parameters of the trial wave function
 	dim : int
 		Dimension of the configuration space, i.e. number of degrees of freedom in the system
-	trial_move : float
-		Current initial trial move variance
 	N_av : int
 		Number of steps the walker takes to compute the acceptance ratio average
 
 	Returns
 	-------
 	dev_acceptance_ratio : float
-		Average acceptance ratio for a random walker giving N_av steps
+		Average acceptance ratio for a random walker given N_av steps
 	"""
 
 	acceptance_ratio = 0
@@ -188,6 +191,8 @@ def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5
 		Initial guess of the initial trial move variance
 	maxiter : int
 		Maximum number of iterations 
+	N_av : int
+		Number of steps the walker takes to compute the acceptance ratio average
 	tol : float
 		Tolerance for the deviation of the acceptance ratio from 0.5
 
@@ -205,12 +210,13 @@ def find_optimal_trial_move(prob_density, alpha, dim, trial_move_init, maxiter=5
 												
 	return opt_trial_move
 
+
 #---MONTE CARLO INTEGRATION---
 
 def MC_integration_core(E_local_f, prob_density, alpha, dim, trial_move, file_name, N_steps=5000, N_walkers=250, N_skip=0, L_start=1):
 	"""
-	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers
-	using Monte Carlo integration. 
+	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers using Monte Carlo integration. 
+	This function is used for parallelization of the MC integration. 
 
 	Parameters
 	----------
@@ -220,6 +226,12 @@ def MC_integration_core(E_local_f, prob_density, alpha, dim, trial_move, file_na
 		Probability density function depending on position r and parameters alpha
 	alpha : np.ndarray
 		Parameters of the trial wave function
+	dim : int
+		Dimension of the configuration space, i.e. number of degrees of freedom in the system
+	trial_move : float
+		Trial move for the random walkers
+	file_name : str
+		Name of the file to store the E_alpha values for each walker
 	N_steps : int
 		Number of steps that the random walker takes
 	N_walkers : int
@@ -228,10 +240,6 @@ def MC_integration_core(E_local_f, prob_density, alpha, dim, trial_move, file_na
 		Number of initial steps to skip for the integration
 	L_start : float
 		Length of the box in which the random walkers are initialized randomly
-	trial_move : float
-		Trial move for the random walkers
-	file_name : str
-		Name of the file to store the E_alpha values for each walker
 
 	Returns
 	-------
@@ -241,7 +249,9 @@ def MC_integration_core(E_local_f, prob_density, alpha, dim, trial_move, file_na
 	init_points = rand_init_point(L_start, dim, N_walkers)
 	steps, _, acceptance_ratio = random_walkers(prob_density, alpha, N_steps, init_points, trial_move)
 	steps = steps[N_skip:, :, :]
+
 	E_alpha_walkers = MC_average_walkers(E_local_f, steps, alpha)
+
 	f = open(file_name, "w")
 	f.write("{:0.35f}\n".format(np.mean(acceptance_ratio)))
 	for E_alpha in E_alpha_walkers:
@@ -253,8 +263,7 @@ def MC_integration_core(E_local_f, prob_density, alpha, dim, trial_move, file_na
 
 def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=250, N_skip=0, L_start=1, N_cores=-1, trial_move=None):
 	"""
-	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers
-	using Monte Carlo integration. 
+	Returns expectation value of the energy E(alpha) averaged over N_walkers random walkers using Monte Carlo integration. 
 
 	Parameters
 	----------
@@ -264,6 +273,8 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 		Probability density function depending on position r and parameters alpha
 	alpha : np.ndarray
 		Parameters of the trial wave function
+	dim : int
+		Dimension of the configuration space, i.e. number of degrees of freedom in the system
 	N_steps : int
 		Number of steps that the random walker takes
 	N_walkers : int
@@ -275,7 +286,7 @@ def MC_integration(E_local_f, prob_density, alpha, dim, N_steps=5000, N_walkers=
 	N_cores : int
 		Number of cores to use for parallisation
 		If -1, it sets to the maximum number of cores available
-	trial_move : float
+	trial_move : float or NoneType
 		Trial move for the random walkers
 		If None, finds the optimal trial move. 
 
@@ -349,8 +360,8 @@ def MC_average_walkers(E_local_f, steps, alpha):
 		Expectation value of the energy for given parameters of the trial wave function
 	"""
 
-	E_local = E_local_f(steps, alpha) # E_local.shape = N_steps, N_walkers
-	E_alpha_walkers = np.average(E_local, axis=0) # E_alpha_walkers.shape = N_walkers
+	E_local = E_local_f(steps, alpha) # E_local.shape = (N_steps, N_walkers)
+	E_alpha_walkers = np.average(E_local, axis=0) # E_alpha_walkers.shape = (N_walkers)
 
 	return E_alpha_walkers
 
@@ -367,7 +378,7 @@ class Optimizer:
 	------------------
 	method : str
 		Method for optimizing alpha
-		Options: "scan1D", "steepest_descent1D"
+		Options: "scan1D", "steepest_descent1D", "steepest_descent_ANY_D"
 	init_alpha : np.ndarray
 		Initial value of alpha
 	Other arguments for the methods (see below)
@@ -388,11 +399,17 @@ class Optimizer:
 	precision : float
 		Precision for the convergence of alpha
 
+	Parameters for 'steepest_descent_ANY_D'
+	-----------------------
+	Same as 'steepest_descent1D' but with extra parameter
+	dim_alpha : int
+		Number of free parameters
+
 	Functions
 	---------
 	update_alpha
 		Updates alpha using the specified method and checks if the 
-		optimization has converged (stored in Optimizer.converged)
+		optimization has converged (stored in self.converged)
 	"""
 
 	def __init__(self, opt_args):
@@ -487,7 +504,7 @@ def steepest_descent1D(alpha_old, args):
 
 	Parameters
 	----------
-	alpha_new : np.ndarray
+	alpha_old : np.ndarray
 		Old value of alpha
 	args : gamma, dE_dalpha
 		gamma (float) is the factor for damping the gradient descent
@@ -511,7 +528,7 @@ def steepest_descent_ANY_D(alpha_old, args):
 
 	Parameters
 	----------
-	alpha_new : np.ndarray
+	alpha_old : np.ndarray
 		Old value of alpha
 	args : gamma, dE_dalpha
 		gamma (float) is the factor for damping the gradient descent
@@ -541,10 +558,10 @@ def save(file_name, alpha_list, data_list, alpha_labels=None, data_labels=["E", 
 	Parameters
 	----------
 	file_name : str
-		Name of the file to store the results
+		Name of the CSV file to store the results
 	alpha_list : list of np.ndarray
 		List of alpha values
-	alpha_list : list of list
+	data_list : list of np.ndarray
 		List of data values
 	alpha_labels : list of str
 		Labels for the elements of alpha_list[i]

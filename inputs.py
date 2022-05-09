@@ -33,12 +33,12 @@ LIST OF EXAMPLE OF INPUTS INCLUDED IN THIS FILE
 def prob_density(r, alpha):
 	"""
 	Returns the value of the probability density function at the specified positions r and parameters alpha.
-	'dim' is the dimension of the integral space
 
 	Parameters
 	----------
 	r : np.ndarray(N_walkers, dim)
-		Positions of N_walkers walkers
+		Positions of N_walkers walkers 
+		'dim' is the dimension of the integral space
 	alpha : np.ndarray(N_parameters)	
 		Parameters of the trial wave function
 
@@ -48,7 +48,7 @@ def prob_density(r, alpha):
 		Probability density function of the different walkers at the specified r and alpha
 	"""
 
-	prob = 0
+	prob = np.zeros(r.shape[0])
 
 	return prob
 
@@ -56,12 +56,12 @@ def prob_density(r, alpha):
 def E_local_f(r, alpha):
 	"""
 	Returns the value of the local energy at the specified positions r and parameters alpha.
-	'dim' is the dimension of the integral space
 
 	Parameters
 	----------
 	r : np.ndarray(N_steps, N_walkers, dim)
-		Positions of N_walkers walkers in different steps
+		Positions of N_walkers walkers for N_steps steps
+		'dim' is the dimension of the integral space
 	alpha : np.ndarray(N_parameters)	
 		Parameters of the trial wave function
 
@@ -71,7 +71,7 @@ def E_local_f(r, alpha):
 		Local energy of the different walkers at the specified r and alpha
 	"""
 
-	E_local = 0
+	E_local = np.zeros((r.shape[0],r.shape[1]))
 
 	return E_local
 
@@ -89,8 +89,8 @@ def E_local_Harmonic_Oscillator(x, alpha):
 
 	Parameters
 	----------
-	x : np.ndarray(N_steps, N_walkers, 1) or np.ndarray(N_steps, N_walkers, 1)
-		Position of N_walkers walkers
+	x : np.ndarray(N_steps, N_walkers, 1)
+		Position of N_walkers walkers for N_steps steps
 	alpha : np.ndarray(1) or float
 		Parameter of the trial wave function
 
@@ -115,7 +115,7 @@ def prob_density_Harmonic_Oscillator(x, alpha):
 	----------
 	x : np.ndarray(N_walkers, 1)
 		Position of N_walkers walkers
-	alpha : np.ndarray(N_parameters)
+	alpha : np.ndarray(1) or float
 		Parameter of the trial wave function
 
 	Returns
@@ -144,13 +144,13 @@ def E_local_Hydrogen_atom(r, alpha):
 	Parameters
 	----------
 	r : np.ndarray(Nsteps, N_walkers, 3)
-		Position in 3D of N_walkers walkers (r = (x,y,z))
+		Position in 3D of N_walkers walkers (r = (x,y,z)) for N_steps steps
 	alpha : np.ndarray(1) or float
 		Parameter of the trial wave function
 
 	Returns
 	-------
-	E_local : np.ndarray(N_walkers)
+	E_local : np.ndarray(N_steps, N_walkers)
 		Local energy of the different walkers at the specified r and alpha
 	"""
 
@@ -203,26 +203,26 @@ def WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha):
 
 	Parameters
 	----------
-	r : np.ndarray(N_steps, N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+	x1, y1, z1, x2, y2, z2 : np.ndarray(N_walkers, N_steps)
+		Position in 6D of N_walkers walkers (r = (x1, y1, z1, x2, y2, z2)) for N_steps steps
 	alpha : np.ndarray(2)
 		Parameters of the trial wave function (from WF: alpha = (z, alpha))
 
 	Returns
 	-------
-	psi : np.ndarray(N_steps, N_walkers)
+	psi : np.ndarray(N_walkers, N_steps)
 		Wave function at the specified position and alpha
 	"""
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 	psi = np.exp(-z*(r1+r2))*np.exp(r12/(2*(1+alpha*r12)))
 
 	return psi
 
 
-def E_local_Helium_atom_GS(r, alpha, h=0.001):
+def E_local_Helium_atom_GS(r, alpha, h=5E-5):
 	"""
 	Returns the value of the local energy for the Helium atom
 	ground state at the specified positions r and parameters alpha.
@@ -231,7 +231,7 @@ def E_local_Helium_atom_GS(r, alpha, h=0.001):
 	Parameters
 	----------
 	r : np.ndarray(N_steps, N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(2)
 		Parameters of the trial wave function (from WF: alpha = (z, alpha))
 	h : float
@@ -243,7 +243,7 @@ def E_local_Helium_atom_GS(r, alpha, h=0.001):
 		Local energy at the specified position and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers, N_steps
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers, N_steps)
 	z, alpha = alpha
 
 	# kinetic energy / WF
@@ -253,15 +253,17 @@ def E_local_Helium_atom_GS(r, alpha, h=0.001):
 	d2x2 = (WF_Helium_atom_GS(x1, y1, z1, x2+h, y2, z2, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1, y1, z1, x2-h, y2, z2, z, alpha))/h**2
 	d2y2 = (WF_Helium_atom_GS(x1, y1, z1, x2, y2+h, z2, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1, y1, z1, x2, y2-h, z2, z, alpha))/h**2
 	d2z2 = (WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2+h, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2-h, z, alpha))/h**2
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2).T / WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha).T # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)
 
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
-	E_pot = (-2/r1 -2/r2 +1/r12).T # E_kin = N_steps, N_walkers
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
+	E_pot = (-2/r1 -2/r2 +1/r12)
 
-	return E_kin + E_pot
+	E_local = (E_kin + E_pot).T # to go back to desired shape
+
+	return E_local
 
 
 def prob_density_Helium_atom_GS(r, alpha):
@@ -272,7 +274,7 @@ def prob_density_Helium_atom_GS(r, alpha):
 	Parameters
 	----------
 	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(2)
 		Parameters of the trial wave function (from WF: alpha = (z, alpha))
 
@@ -282,12 +284,12 @@ def prob_density_Helium_atom_GS(r, alpha):
 		Probability density function at the specified position, z and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers)
 	z, alpha = alpha
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 	prob = np.exp(-2*z*(r1+r2))*np.exp(r12/(1+alpha*r12))
 
 	return prob
@@ -295,37 +297,7 @@ def prob_density_Helium_atom_GS(r, alpha):
 
 # 1 free parameters (set z=2)
 
-def WF_Helium_atom_GS_1param(r, alpha):
-	"""
-	Returns the value of the wave function for the Helium atom
-	ground state at the specified position r and parameter alpha.
-
-	Parameters
-	----------
-	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
-	alpha : np.ndarray(2)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
-	Returns
-	-------
-	psi : np.ndarray(N)
-		Wave function at the specified position and alpha
-	"""
-
-	z = 2
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
-	alpha = alpha[0]
-	
-	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
-	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
-
-	psi = np.exp(-z*(r1+r2))*np.exp(r12/(2*(1+alpha*r12)))
-
-	return psi
-
-
-def E_local_Helium_atom_GS_1param_numeric(r, alpha, h=0.001):
+def E_local_Helium_atom_GS_1param_numeric(r, alpha, h=5E-5):
 	"""
 	Returns the value of the local energy for the Helium atom
 	ground state at the specified position r and parameter alpha.
@@ -333,20 +305,20 @@ def E_local_Helium_atom_GS_1param_numeric(r, alpha, h=0.001):
 
 	Parameters
 	----------
-	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+	r : np.ndarray(N_steps, N_walkers, 6)
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(1)
 		Parameters of the trial wave function (from WF: alpha = (alpha))
 	h : float
 		Step of the numerical derivative
 	Returns
 	-------
-	E_local : np.ndarray(N)
+	E_local : np.ndarray(N_steps, N_walkers)
 		Local energy at the specified position and alpha
 	"""
 
 	z = 2 # one of the parameters is pre-set
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers, N_steps)
 	alpha = alpha[0]
 
 	d2x1 = (WF_Helium_atom_GS(x1+h, y1, z1, x2, y2, z2, z, alpha)-2*WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha)+WF_Helium_atom_GS(x1-h, y1, z1, x2, y2, z2, z, alpha))/h**2
@@ -360,11 +332,14 @@ def E_local_Helium_atom_GS_1param_numeric(r, alpha, h=0.001):
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
-	E_pot = (-2/r1 - 2/r2 + 1/r12) 
+	E_pot = -2/r1 - 2/r2 + 1/r12
 
-	return (E_kin + E_pot)
+	E_local = (E_kin + E_pot).T # to go back to desired shape
+
+	return E_local
+
 
 def E_local_Helium_atom_GS_1param_analytic(r, alpha):
 	"""
@@ -373,23 +348,27 @@ def E_local_Helium_atom_GS_1param_analytic(r, alpha):
 
 	Parameters
 	----------
-	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+	r : np.ndarray(N_steps, N_walkers, 6)
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(1)
 		Parameters of the trial wave function (from WF: alpha = (alpha))
 	Returns
 	-------
-	E_local : np.ndarray(N)
+	E_local : np.ndarray(N_steps, N_walkers)
 		Local energy at the specified position and alpha
 	"""
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
+
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers, N_steps)
 	alpha = alpha[0]
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
-	E_loc = -4 + ((x1/r1-x2/r2)*(x1-x2) + (y1/r1-y2/r2)*(y1-y2) + (z1/r1-z2/r2)*(z1-z2))*(1/(r12*(1+alpha*r12)**2)) - 1/(r12*(1+alpha*r12)**3) - 1/(4*(1+alpha*r12)**4) + 1/r12
+	E_loc = - 4 + ((x1/r1 - x2/r2)*(x1 - x2) + (y1/r1 - y2/r2)*(y1 - y2) + (z1/r1 - z2/r2)*(z1 - z2))*(1/(r12*(1 + alpha*r12)**2)) + \
+			- 1/(r12*(1 + alpha*r12)**3) - 1/(4*(1 + alpha*r12)**4) + 1/r12
+
+	E_loc = E_loc.T # to go back to desired shape
 	
 	return E_loc
 	
@@ -397,28 +376,29 @@ def E_local_Helium_atom_GS_1param_analytic(r, alpha):
 def prob_density_Helium_atom_GS_1param(r , alpha):
 	"""
 	Returns the value of the probability density function for the Helium atom
-	ground state at the specified positions x1,y1,z1,x2,y2,z2 and parameters z and alpha.
+	ground state at the specified positions x1, y1, z1, x2, y2, z2 and parameters z and alpha.
 
 	Parameters
 	----------
 	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(1)
 		Parameters of the trial wave function (from WF: alpha = (alpha))
 
 	Returns
 	-------
-	prob : np.ndarray(N)
+	prob : np.ndarray(N_walkers)
 		Probability density function at the specified position, z and alpha
 	"""
 
 	z = 2 # one of the parameters is preset
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers)
 	alpha = alpha[0]
+
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
-	prob = np.exp(-2*z*(r1+r2))*np.exp(r12/(1+alpha*r12))
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
+	prob = np.exp(-2*z*(r1 + r2))*np.exp(r12/(1 + alpha*r12))
 
 	return prob
 
@@ -427,21 +407,21 @@ def prob_density_Helium_atom_GS_1param(r , alpha):
 #--      First excited      --#
 #------------------------------
 
-def WF_Helium_atom_1E(x1,y1,z1,x2,y2,z2, alpha):
+def WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2, alpha):
 	"""
 	Returns the value of the wave function for the Helium atom
 	first excited state at the specified positions r and parameters alpha.
 
 	Parameters
 	----------
-	x1,y1,z1,x2,y2,z2 : float
-		Position in 3D of N_walkers walkers (r = (x1,y1,z1,x2,y2,z2))
+	x1, y1, z1, x2, y2, z2 : np.ndarray(N_walkers, N_steps)
+		Position in 6D of N_walkers walkers (r = (x1, y1, z1, x2, y2, z2)) for N_steps steps
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 
 	Returns
 	-------
-	psi : np.ndarray(N_steps, N_walkers)
+	psi : np.ndarray(N_walkers, N_steps)
 		Wave function at the specified position and alpha
 	"""
 
@@ -449,7 +429,7 @@ def WF_Helium_atom_1E(x1,y1,z1,x2,y2,z2, alpha):
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
 	psi1s1 = np.exp(-q0*r1)
 	psi1s2 = np.exp(-q0*r2)
@@ -462,7 +442,7 @@ def WF_Helium_atom_1E(x1,y1,z1,x2,y2,z2, alpha):
 	return psi
 
 
-def E_local_Helium_atom_1E(r, alpha, h=0.001):
+def E_local_Helium_atom_1E(r, alpha, h=5E-5):
 	"""
 	Returns the value of the local energy for the Helium atom
 	first excited state at the specified positions r and parameters alpha.
@@ -471,7 +451,7 @@ def E_local_Helium_atom_1E(r, alpha, h=0.001):
 	Parameters
 	----------
 	r : np.ndarray(N_steps, N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
 		Parameters of the trial wave function (from WF: alpha = (z, alpha))
 	h : float
@@ -483,7 +463,7 @@ def E_local_Helium_atom_1E(r, alpha, h=0.001):
 		Local energy at the specified position and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers, N_steps
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers, N_steps)
 
 	# kinetic energy / WF
 	d2x1 = (WF_Helium_atom_1E(x1+h, y1, z1, x2, y2, z2, alpha)-2*WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_1E(x1-h, y1, z1, x2, y2, z2, alpha))/h**2
@@ -493,16 +473,18 @@ def E_local_Helium_atom_1E(r, alpha, h=0.001):
 	d2y2 = (WF_Helium_atom_1E(x1, y1, z1, x2, y2+h, z2, alpha)-2*WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_1E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
 	d2z2 = (WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2+h, alpha)-2*WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
 
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2, alpha) 
 
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
-	E_pot = (-2/r1 -2/r2 +1/r12) # E_kin = N_steps, N_walkers
+	E_pot = (-2/r1 -2/r2 +1/r12) 
 
-	return E_kin + E_pot
+	E_local = (E_kin + E_pot).T # to go back to desired shape 
+
+	return E_local
 
 
 def prob_density_Helium_atom_1E(r, alpha):
@@ -513,7 +495,7 @@ def prob_density_Helium_atom_1E(r, alpha):
 	Parameters
 	----------
 	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(2)
 		Parameters of the trial wave function (from WF: alpha = (z, alpha))
 
@@ -523,7 +505,7 @@ def prob_density_Helium_atom_1E(r, alpha):
 		Probability density function at the specified position, z and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers)
 	psi = WF_Helium_atom_1E(x1, y1, z1, x2, y2, z2, alpha)
 
 	return psi**2
@@ -533,28 +515,29 @@ def prob_density_Helium_atom_1E(r, alpha):
 #--      Second excited      --#
 #-------------------------------
 
-def WF_Helium_atom_2E(x1,y1,z1,x2,y2,z2, alpha):
+def WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha):
 	"""
 	Returns the value of the wave function for the Helium atom
 	second excited state at the specified positions r and parameters alpha.
 
 	Parameters
 	----------
-	x1,y1,z1,x2,y2,z2 : float
-		Position in 3D of N_walkers walkers (r = (x1,y1,z1,x2,y2,z2))
+	x1, y1, z1, x2, y2, z2 : np.ndarray(N_walkers, N_steps)
+		Position in 6D of N_walkers walkers (r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 
 	Returns
 	-------
-	psi : np.ndarray(N_steps, N_walkers)
+	psi : np.ndarray(N_walkers, N_steps)
 		Wave function at the specified position and alpha
 	"""
+
 	q0, q1, alpha = alpha.T
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
 	psi1s1 = np.exp(-q0*r1)
 	psi1s2 = np.exp(-q0*r2)
@@ -567,7 +550,7 @@ def WF_Helium_atom_2E(x1,y1,z1,x2,y2,z2, alpha):
 	return psi
 
 
-def E_local_Helium_atom_2E(r, alpha, h=0.001):
+def E_local_Helium_atom_2E(r, alpha, h=5E-5):
 	"""
 	Returns the value of the local energy for the Helium atom
 	first excited state at the specified positions r and parameters alpha.
@@ -576,9 +559,9 @@ def E_local_Helium_atom_2E(r, alpha, h=0.001):
 	Parameters
 	----------
 	r : np.ndarray(N_steps, N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 	h : float
 		Step for the numerical derivative
 
@@ -588,7 +571,7 @@ def E_local_Helium_atom_2E(r, alpha, h=0.001):
 		Local energy at the specified position and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers, N_steps
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers, N_steps)
 
 	# kinetic energy / WF
 	d2x1 = (WF_Helium_atom_2E(x1+h, y1, z1, x2, y2, z2, alpha)-2*WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_2E(x1-h, y1, z1, x2, y2, z2, alpha))/h**2
@@ -598,16 +581,18 @@ def E_local_Helium_atom_2E(r, alpha, h=0.001):
 	d2y2 = (WF_Helium_atom_2E(x1, y1, z1, x2, y2+h, z2, alpha)-2*WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_2E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
 	d2z2 = (WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2+h, alpha)-2*WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
 
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha) 
 	
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
-	E_pot = (-2/r1 - 2/r2 + 1/r12) # E_kin = N_steps, N_walkers
+	E_pot = -2/r1 - 2/r2 + 1/r12 
 
-	return E_kin + E_pot
+	E_local = (E_kin + E_pot).T # to go back to desired shape
+
+	return E_local
 
 
 def prob_density_Helium_atom_2E(r, alpha):
@@ -618,9 +603,9 @@ def prob_density_Helium_atom_2E(r, alpha):
 	Parameters
 	----------
 	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 
 	Returns
 	-------
@@ -628,7 +613,7 @@ def prob_density_Helium_atom_2E(r, alpha):
 		Probability density function at the specified position, z and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers)
 	psi = WF_Helium_atom_2E(x1, y1, z1, x2, y2, z2, alpha)
 
 	return psi**2
@@ -638,21 +623,21 @@ def prob_density_Helium_atom_2E(r, alpha):
 #--      Third excited      --#
 #------------------------------
 
-def WF_Helium_atom_3E(x1,y1,z1,x2,y2,z2, alpha):
+def WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha):
 	"""
 	Returns the value of the wave function for the Helium atom
 	third excited state at the specified positions r and parameters alpha.
 
 	Parameters
 	----------
-	x1,y1,z1,x2,y2,z2 : float
-		Position in 3D of N_walkers walkers (r = (x1,y1,z1,x2,y2,z2))
+	x1, y1, z1, x2, y2, z2 : np.ndarray(N_walkers, N_steps)
+		Position in 6D of N_walkers walkers (r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 
 	Returns
 	-------
-	psi : np.ndarray(N_steps, N_walkers)
+	psi : np.ndarray(N_walkers, N_steps)
 		Wave function at the specified position and alpha
 	"""
 
@@ -660,7 +645,7 @@ def WF_Helium_atom_3E(x1,y1,z1,x2,y2,z2, alpha):
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
 	psi1s1 = np.exp(-q0*r1)
 	psi1s2 = np.exp(-q0*r2)
@@ -673,7 +658,7 @@ def WF_Helium_atom_3E(x1,y1,z1,x2,y2,z2, alpha):
 	return psi
 
 
-def E_local_Helium_atom_3E(r, alpha, h=0.001):
+def E_local_Helium_atom_3E(r, alpha, h=5E-5):
 	"""
 	Returns the value of the local energy for the Helium atom
 	third excited state at the specified positions r and parameters alpha.
@@ -682,9 +667,9 @@ def E_local_Helium_atom_3E(r, alpha, h=0.001):
 	Parameters
 	----------
 	r : np.ndarray(N_steps, N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 	h : float
 		Step for the numerical derivative
 
@@ -694,7 +679,7 @@ def E_local_Helium_atom_3E(r, alpha, h=0.001):
 		Local energy at the specified position and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers, N_steps
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers, N_steps)
 
 	# kinetic energy / WF
 	d2x1 = (WF_Helium_atom_3E(x1+h, y1, z1, x2, y2, z2, alpha)-2*WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_3E(x1-h, y1, z1, x2, y2, z2, alpha))/h**2
@@ -703,16 +688,18 @@ def E_local_Helium_atom_3E(r, alpha, h=0.001):
 	d2x2 = (WF_Helium_atom_3E(x1, y1, z1, x2+h, y2, z2, alpha)-2*WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_3E(x1, y1, z1, x2-h, y2, z2, alpha))/h**2
 	d2y2 = (WF_Helium_atom_3E(x1, y1, z1, x2, y2+h, z2, alpha)-2*WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_3E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
 	d2z2 = (WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2+h, alpha)-2*WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha) 
 
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
-	E_pot = (-2/r1 - 2/r2 + 1/r12) # E_kin = N_steps, N_walkers
+	E_pot = -2/r1 - 2/r2 + 1/r12
 
-	return E_kin + E_pot
+	E_local = (E_kin + E_pot).T # to go back to desired shape
+
+	return E_local
 
 
 def prob_density_Helium_atom_3E(r, alpha):
@@ -723,9 +710,9 @@ def prob_density_Helium_atom_3E(r, alpha):
 	Parameters
 	----------
 	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 
 	Returns
 	-------
@@ -733,7 +720,7 @@ def prob_density_Helium_atom_3E(r, alpha):
 		Probability density function at the specified position, z and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers)
 	psi = WF_Helium_atom_3E(x1, y1, z1, x2, y2, z2, alpha)
 
 	return psi**2
@@ -743,28 +730,29 @@ def prob_density_Helium_atom_3E(r, alpha):
 #--      Fourth excited      --#
 #-------------------------------
 
-def WF_Helium_atom_4E(x1,y1,z1,x2,y2,z2, alpha):
+def WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha):
 	"""
 	Returns the value of the wave function for the Helium atom
 	fourth excited state at the specified positions r and parameters alpha.
 
 	Parameters
 	----------
-	x1,y1,z1,x2,y2,z2 : float
-		Position in 3D of N_walkers walkers (r = (x1,y1,z1,x2,y2,z2))
+	x1, y1, z1, x2, y2, z2 : np.ndarray(N_walkers, N_steps)
+		Position in 6D of N_walkers walkers (r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (q0, q1))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 
 	Returns
 	-------
-	psi : np.ndarray(N_steps, N_walkers)
+	psi : np.ndarray(N_walkers, N_steps)
 		Wave function at the specified position and alpha
 	"""
+
 	q0, q1, alpha = alpha.T
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
 	psi1s1 = np.exp(-q0*r1)
 	psi1s2 = np.exp(-q0*r2)
@@ -777,7 +765,7 @@ def WF_Helium_atom_4E(x1,y1,z1,x2,y2,z2, alpha):
 	return psi
 
 
-def E_local_Helium_atom_4E(r, alpha, h=0.001):
+def E_local_Helium_atom_4E(r, alpha, h=5E-5):
 	"""
 	Returns the value of the local energy for the Helium atom
 	fourth excited state at the specified positions r and parameters alpha.
@@ -786,9 +774,9 @@ def E_local_Helium_atom_4E(r, alpha, h=0.001):
 	Parameters
 	----------
 	r : np.ndarray(N_steps, N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(3)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 	h : float
 		Step for the numerical derivative
 
@@ -798,7 +786,7 @@ def E_local_Helium_atom_4E(r, alpha, h=0.001):
 		Local energy at the specified position and alpha
 	"""
 
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers, N_steps
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers, N_steps)
 
 	# kinetic energy / WF
 	d2x1 = (WF_Helium_atom_4E(x1+h, y1, z1, x2, y2, z2, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1-h, y1, z1, x2, y2, z2, alpha))/h**2
@@ -807,16 +795,18 @@ def E_local_Helium_atom_4E(r, alpha, h=0.001):
 	d2x2 = (WF_Helium_atom_4E(x1, y1, z1, x2+h, y2, z2, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2-h, y2, z2, alpha))/h**2
 	d2y2 = (WF_Helium_atom_4E(x1, y1, z1, x2, y2+h, z2, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
 	d2z2 = (WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2+h, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
-	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
+	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha) 
 
 	# potential energy 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
 	r2 = np.sqrt(x2**2 + y2**2 + z2**2)
-	r12 = np.sqrt((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)
+	r12 = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
 
-	E_pot = (-2/r1 - 2/r2 + 1/r12) # E_kin = N_steps, N_walkers
+	E_pot = -2/r1 - 2/r2 + 1/r12 
 
-	return E_kin + E_pot
+	E_local = (E_kin + E_pot).T # to go back to desired shape
+
+	return E_local
 
 
 def prob_density_Helium_atom_4E(r, alpha):
@@ -827,9 +817,9 @@ def prob_density_Helium_atom_4E(r, alpha):
 	Parameters
 	----------
 	r : np.ndarray(N_walkers, 6)
-		Position in 3D of N_walkers walkers (from WF: r = (x1,y1,z1,x2,y2,z2))
+		Position in 6D of N_walkers walkers (from WF: r = (x1, y1, z1, x2, y2, z2))
 	alpha : np.ndarray(2)
-		Parameters of the trial wave function (from WF: alpha = (z, alpha))
+		Parameters of the trial wave function (from WF: alpha = (q0, q1, alpha))
 
 	Returns
 	-------
@@ -837,7 +827,7 @@ def prob_density_Helium_atom_4E(r, alpha):
 		Probability density function at the specified position, z and alpha
 	"""
 	
-	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
+	x1, y1, z1, x2, y2, z2 = r.T # x_i.shape = (N_walkers)
 	psi = WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)
 
 	return psi**2
