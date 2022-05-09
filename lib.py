@@ -478,6 +478,7 @@ class Optimizer:
 		
 		return
 
+
 #---VARIATIONAL PARAMETER UPDATE---
 
 def steepest_descent1D(alpha_old, args):
@@ -566,13 +567,14 @@ def save(file_name, alpha_list, data_list, alpha_labels=None, data_labels=["E", 
 	if data_labels is None:
 		header += ",".join(["data{}".format(i+1) for i in range(len(data_list[0]))]) + ","
 	else: 
-		header += ",".join(data_labels) + ","
+		header += ",".join(data_labels)
 	header += "\n"
 	f.write(header)
 
 	for k in range(len(alpha_list)):
 		s = ("{},"*len(alpha_list[k])).format(*alpha_list[k])
 		s += ("{},"*len(data_list[k])).format(*data_list[k])
+		s = s[:-1] # deletes last comma
 		s += "\n"
 		f.write(s)
 
