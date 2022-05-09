@@ -1,5 +1,31 @@
 import numpy as np
 
+"""
+LIST OF EXAMPLE OF INPUTS INCLUDED IN THIS FILE
+===============================================
+
+1) Test functions (EXAMPLE OF FUNCTIONS section)
+	- prob_density
+	- E_local_f
+
+2) 1D Harmonic oscillator (HARMONIC OSCILLATOR section)
+	- E_local_Harmonic_Oscillator: H = -0.5*d^2/dx^2 + 0.5*x**2
+	- prob_density_Harmonic_Oscillator: psi = e**(-alpha*x**2)
+
+3) Hydrogen atom (HYDROGEN ATOM section)
+	- E_local_Hydrogen_atom: H = -0.5*(d^2/dx^2 + d^2/dy^2 + d^2/dz^2) - 1/r, where r = sqrt(x**2 + y**2 + z**2)
+	- prob_density_Hydrogen_atom: e**(-alpha*r) 
+
+4) Helium atom (HELIUM ATOM)
+	- Trial wave functions: ground state, 1st excited, 2nd excited, 3rd excited and 4th excited from
+	"Doma, s. (2009). The Ground-State of the Helium Atom by Using Monte Carlo Variational Method." 
+	- Hamiltonian: H = -0.5*(d^2/dx1^2 + d^2/dy1^2 + d^2/dz1^2 + d^2/dx2^2 + d^2/dy2^2 + d^2/dz2^2) - 2/r1 - 2/r2 + 1/r12 
+	- For each of the trial wave functions: WF_Helium_atom (wavefunction), E_local_Helium_atom (local energy) 
+	and prob_density_Helium_atom (probability density functon). The computation of the derivatives in the 
+	local energy are done numerically except for the case of the ground state with 1 free parameter. 
+"""
+
+
 ################################
 #     EXAMPLE OF FUNCTIONS     #
 ################################
@@ -159,7 +185,7 @@ def prob_density_Hydrogen_atom(r, alpha):
 
 
 ################################
-#        HELIUM ATOM         #
+#         HELIUM ATOM          #
 ################################
 
 # TRIAL WAVE FUNCTIONS FROM: Doma, s. (2009). The Ground-State of the Helium Atom by Using Monte Carlo Variational Method. 
@@ -167,6 +193,8 @@ def prob_density_Hydrogen_atom(r, alpha):
 #------------------------------
 #--      Ground State       --#
 #------------------------------
+
+# 2 free parameters
 
 def WF_Helium_atom_GS(x1, y1, z1, x2, y2, z2, z, alpha):
 	"""
@@ -264,9 +292,8 @@ def prob_density_Helium_atom_GS(r, alpha):
 
 	return prob
 
-#-----------------------------------
-# 1 parameter Helium model: set z=2
-#-----------------------------------
+
+# 1 free parameters (set z=2)
 
 def WF_Helium_atom_GS_1param(r, alpha):
 	"""
@@ -284,6 +311,7 @@ def WF_Helium_atom_GS_1param(r, alpha):
 	psi : np.ndarray(N)
 		Wave function at the specified position and alpha
 	"""
+
 	z = 2
 	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
 	alpha = alpha[0]
@@ -295,6 +323,7 @@ def WF_Helium_atom_GS_1param(r, alpha):
 	psi = np.exp(-z*(r1+r2))*np.exp(r12/(2*(1+alpha*r12)))
 
 	return psi
+
 
 def E_local_Helium_atom_GS_1param_numeric(r, alpha, h=0.001):
 	"""
@@ -315,6 +344,7 @@ def E_local_Helium_atom_GS_1param_numeric(r, alpha, h=0.001):
 	E_local : np.ndarray(N)
 		Local energy at the specified position and alpha
 	"""
+
 	z = 2 # one of the parameters is pre-set
 	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
 	alpha = alpha[0]
@@ -381,6 +411,7 @@ def prob_density_Helium_atom_GS_1param(r , alpha):
 	prob : np.ndarray(N)
 		Probability density function at the specified position, z and alpha
 	"""
+
 	z = 2 # one of the parameters is preset
 	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
 	alpha = alpha[0]
@@ -390,6 +421,7 @@ def prob_density_Helium_atom_GS_1param(r , alpha):
 	prob = np.exp(-2*z*(r1+r2))*np.exp(r12/(1+alpha*r12))
 
 	return prob
+
 
 #------------------------------
 #--      First excited      --#
@@ -412,6 +444,7 @@ def WF_Helium_atom_1E(x1,y1,z1,x2,y2,z2, alpha):
 	psi : np.ndarray(N_steps, N_walkers)
 		Wave function at the specified position and alpha
 	"""
+
 	q0, q1, alpha = alpha.T
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
@@ -495,9 +528,10 @@ def prob_density_Helium_atom_1E(r, alpha):
 
 	return psi**2
 
-#------------------------------
+
+#-------------------------------
 #--      Second excited      --#
-#------------------------------
+#-------------------------------
 
 def WF_Helium_atom_2E(x1,y1,z1,x2,y2,z2, alpha):
 	"""
@@ -599,6 +633,7 @@ def prob_density_Helium_atom_2E(r, alpha):
 
 	return psi**2
 
+
 #------------------------------
 #--      Third excited      --#
 #------------------------------
@@ -620,6 +655,7 @@ def WF_Helium_atom_3E(x1,y1,z1,x2,y2,z2, alpha):
 	psi : np.ndarray(N_steps, N_walkers)
 		Wave function at the specified position and alpha
 	"""
+
 	q0, q1, alpha = alpha.T
 
 	r1 = np.sqrt(x1**2 + y1**2 + z1**2)
@@ -703,9 +739,9 @@ def prob_density_Helium_atom_3E(r, alpha):
 	return psi**2
 
 
-#------------------------------
+#-------------------------------
 #--      Fourth excited      --#
-#------------------------------
+#-------------------------------
 
 def WF_Helium_atom_4E(x1,y1,z1,x2,y2,z2, alpha):
 	"""
@@ -800,6 +836,7 @@ def prob_density_Helium_atom_4E(r, alpha):
 	prob : np.ndarray(N_walkers)
 		Probability density function at the specified position, z and alpha
 	"""
+	
 	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers
 	psi = WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)
 
