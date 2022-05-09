@@ -801,12 +801,12 @@ def E_local_Helium_atom_4E(r, alpha, h=0.001):
 	x1, y1, z1, x2, y2, z2 = r.T # x_i = N_walkers, N_steps
 
 	# kinetic energy / WF
-	d2x1 = (WF_Helium_atom_4E(x1+h, y1, z1, x2, y2, z2, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1-h, y1, z1, x2, y2, z2, alpha))/h**2
-	d2y1 = (WF_Helium_atom_4E(x1, y1+h, z1, x2, y2, z2, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1-h, z1, x2, y2, z2, alpha))/h**2
-	d2z1 = (WF_Helium_atom_4E(x1, y1, z1+h, x2, y2, z2, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1-h, x2, y2, z2, alpha))/h**2
-	d2x2 = (WF_Helium_atom_4E(x1, y1, z1, x2+h, y2, z2, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2-h, y2, z2, alpha))/h**2
-	d2y2 = (WF_Helium_atom_4E(x1, y1, z1, x2, y2+h, z2, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
-	d2z2 = (WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2+h, alpha)-WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
+	d2x1 = (WF_Helium_atom_4E(x1+h, y1, z1, x2, y2, z2, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1-h, y1, z1, x2, y2, z2, alpha))/h**2
+	d2y1 = (WF_Helium_atom_4E(x1, y1+h, z1, x2, y2, z2, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1-h, z1, x2, y2, z2, alpha))/h**2
+	d2z1 = (WF_Helium_atom_4E(x1, y1, z1+h, x2, y2, z2, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1-h, x2, y2, z2, alpha))/h**2
+	d2x2 = (WF_Helium_atom_4E(x1, y1, z1, x2+h, y2, z2, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2-h, y2, z2, alpha))/h**2
+	d2y2 = (WF_Helium_atom_4E(x1, y1, z1, x2, y2+h, z2, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2, y2-h, z2, alpha))/h**2
+	d2z2 = (WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2+h, alpha)-2*WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha)+WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2-h, alpha))/h**2
 	E_kin = -0.5*(d2x1 + d2y1 + d2z1 + d2x2 + d2y2 + d2z2) / WF_Helium_atom_4E(x1, y1, z1, x2, y2, z2, alpha) # E_kin = N_steps, N_walkers
 
 	# potential energy 
