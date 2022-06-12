@@ -103,6 +103,10 @@ dim = 6
 opt_args = {"method":"steepest_descent_ANY_D", "init_alpha":np.array([2,2,0.5]), "init_step":np.array([-0.1,-0.1,-0.1]), "gamma":0.5, "precision":1E-5}
 ```
 
+## Results and discusion
+
+The whole project is described in detail in [report.pdf](https://github.com/abermejillo/variational_QMonteCarlo/blob/40cf9892ab1150e591f16fd2642e5f0dcf75af05/report.pdf)
+
 ## Authors 
 - Álvaro Bermejillo Seco
 - Daniel Bedialauneta Rodríguez
